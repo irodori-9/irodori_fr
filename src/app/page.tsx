@@ -10,7 +10,7 @@ interface User {
   last_name: string
   first_name: string
   email: string
-  birth_date: string
+  birthdate: string
   postal_code: string
   address: string
   phone_number: string

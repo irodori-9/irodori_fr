@@ -9,7 +9,7 @@ interface FormData {
   last_name: string
   first_name: string
   email: string
-  birth_date: string
+  birthdate: string
   postal_code: string
   address: string
   phone_number: string
@@ -24,7 +24,7 @@ export default function Register() {
     last_name: '',
     first_name: '',
     email: '',
-    birth_date: '',
+    birthdate: '',
     postal_code: '',
     address: '',
     phone_number: '',
@@ -44,7 +44,7 @@ export default function Register() {
     if (!formData.last_name.trim()) newErrors.last_name = '姓は必須です'
     if (!formData.first_name.trim()) newErrors.first_name = '名は必須です'
     if (!formData.email.trim()) newErrors.email = 'メールアドレスは必須です'
-    if (!formData.birth_date) newErrors.birth_date = '生年月日は必須です'
+    if (!formData.birthdate) newErrors.birthdate = '生年月日は必須です'
     if (!formData.postal_code.trim()) newErrors.postal_code = '郵便番号は必須です'
     if (!formData.address.trim()) newErrors.address = '住所は必須です'
     if (!formData.phone_number.trim()) newErrors.phone_number = '電話番号は必須です'
@@ -207,20 +207,20 @@ export default function Register() {
           </div>
 
           <div>
-            <label htmlFor="birth_date" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700">
               生年月日 *
             </label>
             <input
               type="date"
-              id="birth_date"
-              name="birth_date"
-              value={formData.birth_date}
+              id="birthdate"
+              name="birthdate"
+              value={formData.birthdate}
               onChange={handleChange}
               className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.birth_date ? 'border-red-300' : 'border-gray-300'
+                errors.birthdate ? 'border-red-300' : 'border-gray-300'
               }`}
             />
-            {errors.birth_date && <p className="mt-1 text-sm text-red-600">{errors.birth_date}</p>}
+            {errors.birthdate && <p className="mt-1 text-sm text-red-600">{errors.birthdate}</p>}
           </div>
 
           <div>
