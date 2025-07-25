@@ -4,6 +4,11 @@ import { useState, FormEvent, ChangeEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import axios from 'axios'
+import Header from '../../components/Header'
+import Card from '../../components/Card'
+import FormField from '../../components/FormField'
+import Button from '../../components/Button'
+import ErrorMessage from '../../components/ErrorMessage'
 
 interface FormData {
   last_name: string
@@ -139,230 +144,144 @@ export default function Register() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-blue-600 mb-2">IRODORI</h1>
-          <h2 className="text-xl font-semibold text-gray-900">新規登録</h2>
+    <Card maxWidth="2xl">
+      <Header subtitle="新規登録" />
+      
+      {errors.general && <ErrorMessage message={errors.general} />}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="姓 *"
+            type="text"
+            id="last_name"
+            name="last_name"
+            value={formData.last_name}
+            onChange={handleChange}
+            error={errors.last_name}
+          />
+          
+          <FormField
+            label="名 *"
+            type="text"
+            id="first_name"
+            name="first_name"
+            value={formData.first_name}
+            onChange={handleChange}
+            error={errors.first_name}
+          />
         </div>
-        
-        {errors.general && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-            {errors.general}
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="last_name" className="block text-sm font-medium text-gray-700">
-                姓 *
-              </label>
-              <input
-                type="text"
-                id="last_name"
-                name="last_name"
-                value={formData.last_name}
-                onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.last_name ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.last_name && <p className="mt-1 text-sm text-red-600">{errors.last_name}</p>}
-            </div>
+        <FormField
+          label="メールアドレス *"
+          type="email"
+          id="email"
+          name="email"
+          value={formData.email}
+          onChange={handleChange}
+          error={errors.email}
+        />
 
-            <div>
-              <label htmlFor="first_name" className="block text-sm font-medium text-gray-700">
-                名 *
-              </label>
-              <input
-                type="text"
-                id="first_name"
-                name="first_name"
-                value={formData.first_name}
-                onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.first_name ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.first_name && <p className="mt-1 text-sm text-red-600">{errors.first_name}</p>}
-            </div>
-          </div>
+        <FormField
+          label="生年月日 *"
+          type="date"
+          id="birthdate"
+          name="birthdate"
+          value={formData.birthdate}
+          onChange={handleChange}
+          error={errors.birthdate}
+        />
 
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              メールアドレス *
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.email ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-          </div>
+        <FormField
+          label="郵便番号 * (例: 123-4567)"
+          type="text"
+          id="postal_code"
+          name="postal_code"
+          placeholder="123-4567"
+          value={formData.postal_code}
+          onChange={handleChange}
+          error={errors.postal_code}
+        />
 
-          <div>
-            <label htmlFor="birthdate" className="block text-sm font-medium text-gray-700">
-              生年月日 *
-            </label>
-            <input
-              type="date"
-              id="birthdate"
-              name="birthdate"
-              value={formData.birthdate}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.birthdate ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.birthdate && <p className="mt-1 text-sm text-red-600">{errors.birthdate}</p>}
-          </div>
+        <FormField
+          label="住所 *"
+          type="text"
+          id="address"
+          name="address"
+          value={formData.address}
+          onChange={handleChange}
+          error={errors.address}
+        />
 
-          <div>
-            <label htmlFor="postal_code" className="block text-sm font-medium text-gray-700">
-              郵便番号 * (例: 123-4567)
-            </label>
-            <input
-              type="text"
-              id="postal_code"
-              name="postal_code"
-              placeholder="123-4567"
-              value={formData.postal_code}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.postal_code ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.postal_code && <p className="mt-1 text-sm text-red-600">{errors.postal_code}</p>}
-          </div>
+        <FormField
+          label="電話番号 * (10-11桁の数字)"
+          type="tel"
+          id="phone_number"
+          name="phone_number"
+          placeholder="09012345678"
+          value={formData.phone_number}
+          onChange={handleChange}
+          error={errors.phone_number}
+        />
 
-          <div>
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700">
-              住所 *
-            </label>
-            <input
-              type="text"
-              id="address"
-              name="address"
-              value={formData.address}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.address ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.address && <p className="mt-1 text-sm text-red-600">{errors.address}</p>}
-          </div>
-
-          <div>
-            <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700">
-              電話番号 * (10-11桁の数字)
-            </label>
-            <input
-              type="tel"
-              id="phone_number"
-              name="phone_number"
-              placeholder="09012345678"
-              value={formData.phone_number}
-              onChange={handleChange}
-              className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                errors.phone_number ? 'border-red-300' : 'border-gray-300'
-              }`}
-            />
-            {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="occupation" className="block text-sm font-medium text-gray-700">
-                職業 *
-              </label>
-              <input
-                type="text"
-                id="occupation"
-                name="occupation"
-                value={formData.occupation}
-                onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.occupation ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.occupation && <p className="mt-1 text-sm text-red-600">{errors.occupation}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="company_name" className="block text-sm font-medium text-gray-700">
-                勤務先名 *
-              </label>
-              <input
-                type="text"
-                id="company_name"
-                name="company_name"
-                value={formData.company_name}
-                onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.company_name ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.company_name && <p className="mt-1 text-sm text-red-600">{errors.company_name}</p>}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                パスワード * (8文字以上)
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.password ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-            </div>
-
-            <div>
-              <label htmlFor="password_confirm" className="block text-sm font-medium text-gray-700">
-                パスワード（確認用） *
-              </label>
-              <input
-                type="password"
-                id="password_confirm"
-                name="password_confirm"
-                value={formData.password_confirm}
-                onChange={handleChange}
-                className={`mt-1 block w-full px-3 py-2 border rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.password_confirm ? 'border-red-300' : 'border-gray-300'
-                }`}
-              />
-              {errors.password_confirm && <p className="mt-1 text-sm text-red-600">{errors.password_confirm}</p>}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50"
-          >
-            {loading ? '登録中...' : '登録'}
-          </button>
-        </form>
-
-        <div className="mt-4 text-center">
-          <Link href="/login" className="text-blue-600 hover:text-blue-800">
-            ログインはこちら
-          </Link>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="職業 *"
+            type="text"
+            id="occupation"
+            name="occupation"
+            value={formData.occupation}
+            onChange={handleChange}
+            error={errors.occupation}
+          />
+          
+          <FormField
+            label="勤務先名 *"
+            type="text"
+            id="company_name"
+            name="company_name"
+            value={formData.company_name}
+            onChange={handleChange}
+            error={errors.company_name}
+          />
         </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            label="パスワード * (8文字以上)"
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            error={errors.password}
+          />
+          
+          <FormField
+            label="パスワード（確認用） *"
+            type="password"
+            id="password_confirm"
+            name="password_confirm"
+            value={formData.password_confirm}
+            onChange={handleChange}
+            error={errors.password_confirm}
+          />
+        </div>
+
+        <Button
+          type="submit"
+          loading={loading}
+          className="w-full"
+        >
+          登録
+        </Button>
+      </form>
+
+      <div className="mt-4 text-center">
+        <Link href="/login" className="text-blue-600 hover:text-blue-800">
+          ログインはこちら
+        </Link>
       </div>
-    </div>
+    </Card>
   )
 }
