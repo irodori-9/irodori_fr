@@ -1,17 +1,36 @@
-import { ReactNode } from 'react'
+"use client"
+
+import { usePathname, useRouter } from "next/navigation"
+import { ArrowLeft, MoreHorizontal } from "lucide-react"
+import { Cherry_Bomb_One } from "next/font/google"
+
+const cherryBombOne = Cherry_Bomb_One({ subsets: ["latin"], weight: "400", display: "swap" })
 
 interface HeaderProps {
-  title?: string
-  subtitle?: ReactNode
+  subtitle?: string;
 }
 
-export default function Header({ title = "IRODORI", subtitle }: HeaderProps) {
+export default function Header({ subtitle }: HeaderProps = {}) {
+  const pathname = usePathname()
+  const router = useRouter()
+  const showBackButton = pathname === "/wallet"
+
   return (
-    <div className="text-center mb-6">
-      <h1 className="text-3xl font-bold text-blue-600 mb-2">{title}</h1>
-      {subtitle && (
-        <h2 className="text-xl font-semibold text-gray-900">{subtitle}</h2>
+    <header className="flex items-center justify-between p-4 sm:p-6 bg-[#B547EB] text-white rounded-b-3xl shadow-lg sticky top-0 z-20">
+      {showBackButton ? (
+        <button
+          onClick={() => router.back()}
+          className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+        >
+          <ArrowLeft size={20} />
+        </button>
+      ) : (
+        <div className="w-9 h-9"></div> // Placeholder for alignment
       )}
-    </div>
+      <h1 className={`text-2xl font-bold ${cherryBombOne.className}`}>{subtitle || "たなぼた！"}</h1>
+      <button className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors">
+        <MoreHorizontal size={20} />
+      </button>
+    </header>
   )
 }
