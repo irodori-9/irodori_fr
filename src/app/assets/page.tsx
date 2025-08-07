@@ -112,7 +112,7 @@ export default function AssetsPage() {
           <h2 className="font-bold text-lg mb-2">たなぼた履歴</h2>
           <div className="p-4 bg-purple-100/80 rounded-2xl text-center">
             <p className="text-xs text-gray-500">2025/07/01</p>
-            <p className="font-medium text-gray-700">チケットクロス</p>
+            <p className="font-medium text-gray-700">チケットふくだま</p>
             <p className="text-3xl font-bold text-green-600 mt-1">+ ¥2,000</p>
             <p className="text-sm text-purple-700 font-semibold mt-1">貯金口座に追加</p>
           </div>
