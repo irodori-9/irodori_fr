@@ -241,8 +241,8 @@ export default function RegisterPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [zipError, setZipError] = useState<string | null>(null)
-  const [phoneError, setPhoneError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [triedSubmit, setTriedSubmit] = useState(false)
 
   const digitsOnly = (s: string) => s.replace(/\D/g, "")
   const isValidPostal = (s: string) => digitsOnly(s).length === 7
@@ -266,7 +266,7 @@ export default function RegisterPage() {
     form.address &&
     form.email &&
     isValidPhone(form.phone) &&
-    form.password.length >= 6 &&
+    form.password.length >= 8 &&
     form.password === form.passwordConfirm
 
   const set = (k: keyof typeof form) => (v: string) => setForm((s) => ({ ...s, [k]: v }))
@@ -284,6 +284,54 @@ export default function RegisterPage() {
   const btnDisabled =
     "bg-gradient-to-b from-[#ffffff] to-[#e1e0e2] text-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
 
+  const validateForm = (): boolean => {
+    const errs: Record<string, string> = {}
+
+    // 必須項目
+    if (!form.last.trim()) errs.last = "姓は必須です"
+    if (!form.first.trim()) errs.first = "名は必須です"
+    if (!form.email.trim()) errs.email = "メールアドレスは必須です"
+    if (!form.birthdayYear || !form.birthdayMonth || !form.birthdayDay) errs.birthdate = "生年月日は必須です"
+    if (!form.zip.trim()) errs.zip = "郵便番号は必須です"
+    if (!form.address.trim()) errs.address = "住所は必須です"
+    if (!form.phone.trim()) errs.phone = "電話番号は必須です"
+    if (!form.job.trim()) errs.job = "職業は必須です"
+    if (!form.password) errs.password = "パスワードは必須です"
+    if (!form.passwordConfirm) errs.passwordConfirm = "パスワード確認は必須です"
+
+    // メールアドレス形式
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (form.email && !emailRegex.test(form.email)) {
+      errs.email = "メールアドレスの形式が正しくありません"
+    }
+
+    // パスワード長さ
+    if (form.password && form.password.length < 8) {
+      errs.password = "パスワードは8文字以上で入力してください"
+    }
+
+    // パスワード一致
+    if (form.password && form.passwordConfirm && form.password !== form.passwordConfirm) {
+      errs.passwordConfirm = "パスワードが一致しません"
+    }
+
+    // 郵便番号形式（123-4567）
+    const postalCodeRegex = /^\d{3}-\d{4}$/
+    const formattedZip = isValidPostal(form.zip) ? formatPostal(form.zip) : form.zip
+    if (form.zip && !postalCodeRegex.test(formattedZip)) {
+      errs.zip = "郵便番号は123-4567の形式で入力してください"
+    }
+
+    // 電話番号（数字のみ10-11桁）
+    const phoneDigits = form.phone.replace(/\D/g, "")
+    if (form.phone && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      errs.phone = "電話番号は10-11桁の数字で入力してください"
+    }
+
+    setFieldErrors(errs)
+    return Object.keys(errs).length === 0
+  }
+
   return (
     <div className="space-y-6 mt-8 sm:mt-12">
       <h1
@@ -294,33 +342,67 @@ export default function RegisterPage() {
 
       <div className="space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          <Input
-            placeholder="姓"
-            value={form.last}
-            onChange={(e) => set("last")(e.target.value)}
-            className={inputClass}
-          />
-          <Input
-            placeholder="名"
-            value={form.first}
-            onChange={(e) => set("first")(e.target.value)}
-            className={inputClass}
-          />
+          <div className="flex flex-col gap-1">
+            <Input
+              placeholder="姓"
+              value={form.last}
+              onChange={(e) => {
+                set("last")(e.target.value)
+                if (triedSubmit && fieldErrors.last) setFieldErrors((s) => ({ ...s, last: "" }))
+              }}
+              className={inputClass}
+            />
+            {triedSubmit && fieldErrors.last ? (
+              <p className="text-sm text-[#B547EB]">{fieldErrors.last}</p>
+            ) : null}
+          </div>
+          <div className="flex flex-col gap-1">
+            <Input
+              placeholder="名"
+              value={form.first}
+              onChange={(e) => {
+                set("first")(e.target.value)
+                if (triedSubmit && fieldErrors.first) setFieldErrors((s) => ({ ...s, first: "" }))
+              }}
+              className={inputClass}
+            />
+            {triedSubmit && fieldErrors.first ? (
+              <p className="text-sm text-[#B547EB]">{fieldErrors.first}</p>
+            ) : null}
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 items-stretch">
           {/* 生年月日（単一トリガー・選択式） */}
-          <BirthdatePicker
-            value={{ year: form.birthdayYear, month: form.birthdayMonth, day: form.birthdayDay }}
-            onChange={(v) => {
-              set("birthdayYear")(v.year)
-              set("birthdayMonth")(v.month)
-              set("birthdayDay")(v.day)
-            }}
-            className={triggerH}
-          />
+          <div className="flex flex-col gap-1">
+            <BirthdatePicker
+              value={{ year: form.birthdayYear, month: form.birthdayMonth, day: form.birthdayDay }}
+              onChange={(v) => {
+                set("birthdayYear")(v.year)
+                set("birthdayMonth")(v.month)
+                set("birthdayDay")(v.day)
+                if (triedSubmit && fieldErrors.birthdate) setFieldErrors((s) => ({ ...s, birthdate: "" }))
+              }}
+              className={triggerH}
+            />
+            {triedSubmit && fieldErrors.birthdate ? (
+              <p className="text-sm text-[#B547EB]">{fieldErrors.birthdate}</p>
+            ) : null}
+          </div>
 
-          <OccupationPicker value={form.job} onChange={set("job")} className={triggerH} />
+          <div className="flex flex-col gap-1">
+            <OccupationPicker
+              value={form.job}
+              onChange={(v) => {
+                set("job")(v)
+                if (triedSubmit && fieldErrors.job) setFieldErrors((s) => ({ ...s, job: "" }))
+              }}
+              className={triggerH}
+            />
+            {triedSubmit && fieldErrors.job ? (
+              <p className="text-sm text-[#B547EB]">{fieldErrors.job}</p>
+            ) : null}
+          </div>
         </div>
 
         <Input
@@ -328,63 +410,90 @@ export default function RegisterPage() {
           value={form.zip}
           onChange={(e) => {
             set("zip")(e.target.value)
-            if (zipError) setZipError(null)
+            if (triedSubmit && fieldErrors.zip) setFieldErrors((s) => ({ ...s, zip: "" }))
           }}
           onBlur={() => {
             if (isValidPostal(form.zip)) {
               set("zip")(formatPostal(form.zip))
-              setZipError(null)
+              if (triedSubmit) setFieldErrors((s) => ({ ...s, zip: "" }))
             } else {
-              setZipError("郵便番号は123-4567の形式で入力してください")
+              if (triedSubmit) setFieldErrors((s) => ({ ...s, zip: "郵便番号は123-4567の形式で入力してください" }))
             }
           }}
           className={inputClass}
         />
-        {zipError ? <p className="text-sm text-red-600">{zipError}</p> : null}
+        {triedSubmit && fieldErrors.zip ? <p className="text-sm text-[#B547EB]">{fieldErrors.zip}</p> : null}
         <Input
           placeholder="住所"
           value={form.address}
-          onChange={(e) => set("address")(e.target.value)}
+          onChange={(e) => {
+            set("address")(e.target.value)
+            if (triedSubmit && fieldErrors.address) setFieldErrors((s) => ({ ...s, address: "" }))
+          }}
           className={inputClass}
         />
+        {triedSubmit && fieldErrors.address ? (
+          <p className="text-sm text-[#B547EB]">{fieldErrors.address}</p>
+        ) : null}
         <Input
           placeholder="メールアドレス"
           type="email"
           value={form.email}
-          onChange={(e) => set("email")(e.target.value)}
+          onChange={(e) => {
+            set("email")(e.target.value)
+            if (triedSubmit && fieldErrors.email) setFieldErrors((s) => ({ ...s, email: "" }))
+          }}
           className={inputClass}
         />
+        {triedSubmit && fieldErrors.email ? (
+          <p className="text-sm text-[#B547EB]">{fieldErrors.email}</p>
+        ) : null}
         <Input
           placeholder="電話番号（10桁 or 11桁の数字, ハイフンなし）"
           value={form.phone}
           onChange={(e) => {
             set("phone")(e.target.value)
-            if (phoneError) setPhoneError(null)
+            if (triedSubmit && fieldErrors.phone) setFieldErrors((s) => ({ ...s, phone: "" }))
           }}
           onBlur={() => {
             if (!isValidPhone(form.phone)) {
-              setPhoneError("電話番号は10-11桁の数字で入力してください")
+              if (triedSubmit)
+                setFieldErrors((s) => ({ ...s, phone: "電話番号は10-11桁の数字で入力してください" }))
             } else {
-              setPhoneError(null)
+              if (triedSubmit) setFieldErrors((s) => ({ ...s, phone: "" }))
             }
           }}
           className={inputClass}
         />
-        {phoneError ? <p className="text-sm text-red-600">{phoneError}</p> : null}
+        {triedSubmit && fieldErrors.phone ? (
+          <p className="text-sm text-[#B547EB]">{fieldErrors.phone}</p>
+        ) : null}
         <Input
-          placeholder="パスワード"
+          placeholder="パスワード（8文字以上）"
           type="password"
           value={form.password}
-          onChange={(e) => set("password")(e.target.value)}
+          onChange={(e) => {
+            set("password")(e.target.value)
+            if (triedSubmit && fieldErrors.password) setFieldErrors((s) => ({ ...s, password: "" }))
+          }}
           className={inputClass}
         />
+        {triedSubmit && fieldErrors.password ? (
+          <p className="text-sm text-[#B547EB]">{fieldErrors.password}</p>
+        ) : null}
         <Input
           placeholder="パスワード（確認用）"
           type="password"
           value={form.passwordConfirm}
-          onChange={(e) => set("passwordConfirm")(e.target.value)}
+          onChange={(e) => {
+            set("passwordConfirm")(e.target.value)
+            if (triedSubmit && fieldErrors.passwordConfirm) setFieldErrors((s) => ({ ...s, passwordConfirm: "" }))
+          }}
           className={inputClass}
         />
+        {triedSubmit && fieldErrors.passwordConfirm ? (
+          <p className="text-sm text-[#B547EB]">{fieldErrors.passwordConfirm}</p>
+        ) : null}
       </div>
 
       {error ? (
@@ -393,9 +502,10 @@ export default function RegisterPage() {
 
       <div className="pt-4">
         <Button
-          disabled={!canNext || loading}
+          disabled={loading}
           onClick={async () => {
-            if (!canNext) return
+            setTriedSubmit(true)
+            if (!validateForm()) return
             setLoading(true)
             setError(null)
             try {
@@ -438,7 +548,7 @@ export default function RegisterPage() {
               setLoading(false)
             }
           }}
-          className={`${btnBase} ${!canNext || loading ? btnDisabled : btnEnabled}`}
+          className={`${btnBase} ${canNext ? btnEnabled : btnDisabled}`}
         >
           <span className={`${cherry.className} tracking-[0.06em]`}>
             {loading ? "送信中..." : "つぎへ"}
