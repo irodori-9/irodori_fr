@@ -12,7 +12,7 @@ GitHub Actionsを使用してフロントエンドとバックエンドを別々
 - **データベース**: Azure MySQL (Azure側で管理)
 
 ### 技術スタック
-- **フロントエンド**: Next.js 15.2.4 + TypeScript + Tailwind CSS
+- **フロントエンド**: Next.js 14.0.3 + TypeScript + Tailwind CSS
 - **バックエンド**: FastAPI + SQLAlchemy + bcrypt認証
 - **データベース**: Azure MySQL (SQLiteフォールバック対応)
 - **認証**: セッションベース認証（JWT不使用）

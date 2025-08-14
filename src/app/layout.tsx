@@ -1,32 +1,23 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import AppShell from "@/components/app-shell"
-
-const inter = Inter({ subsets: ["latin"], display: "swap" })
+import type { Metadata } from 'next'
+import { ReactNode } from 'react'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: "Tanabota Banking",
-  description: "A modern banking interface",
-    generator: 'v0.app'
+  title: 'IRODORI - User Authentication',
+  description: 'User registration and login system',
 }
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+}: {
+  children: ReactNode
+}) {
   return (
     <html lang="ja">
-      <body className={inter.className}>
-        {/* 最背面のグラデーション背景（全ページ共通） */}
-        <div
-          className="fixed inset-0 -z-50 pointer-events-none bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50"
-          aria-hidden="true"
-        />
-        {/* 画面部分（max-w-md）とコンテンツ。背景より常に前面に出る */}
-        <AppShell>{children}</AppShell>
+      <body>
+        <div className="container mx-auto px-4 py-8">
+          {children}
+        </div>
       </body>
     </html>
   )
