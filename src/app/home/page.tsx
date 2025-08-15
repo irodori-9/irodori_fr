@@ -1,10 +1,11 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { Heart, Mic, User } from 'lucide-react'
+import { Heart, Mic, User, Volume2, VolumeX } from 'lucide-react'
 import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import axios from 'axios'
+import { useTextToSpeech } from '@/hooks/useTextToSpeech'
 
 const summaryData = [
   { label: "貯金した額", value: "¥500,000" },
@@ -19,6 +20,10 @@ export default function HomePage() {
   const [messages, setMessages] = useState<{type: 'user' | 'bot', text: string}[]>([])
   const [error, setError] = useState('')
   const [recordingTime, setRecordingTime] = useState(0)
+  const [speechEnabled, setSpeechEnabled] = useState(true)
+  
+  // 音声合成フック
+  const { isLoading: isSynthesizing, isPlaying: isSpeaking, error: speechError, speak, stop: stopSpeech, clearError: clearSpeechError } = useTextToSpeech()
   
   // 音声録音用の ref と state
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -240,8 +245,24 @@ export default function HomePage() {
       
       console.log('Bot応答:', botResponse)
       
-      // ステップ9: Bot応答をTANABUTAちゃんの発言として表示
-      setMessages(prev => [...prev, { type: 'bot', text: botResponse }])
+      // ステップ9: 音声合成が有効な場合は音声を生成してから表示・再生
+      if (speechEnabled) {
+        try {
+          console.log('🔊 音声合成開始:', botResponse)
+          // 音声合成を実行（音声準備完了まで待機）
+          await speak(botResponse)
+          console.log('✅ 音声合成完了、メッセージ表示')
+          // 音声準備完了後にメッセージを表示（音声は自動再生される）
+          setMessages(prev => [...prev, { type: 'bot', text: botResponse }])
+        } catch (speechErr) {
+          console.warn('⚠️ 音声合成に失敗、テキストのみ表示:', speechErr)
+          // 音声合成に失敗してもテキストは表示
+          setMessages(prev => [...prev, { type: 'bot', text: botResponse }])
+        }
+      } else {
+        // 音声無効時はテキストのみ表示
+        setMessages(prev => [...prev, { type: 'bot', text: botResponse }])
+      }
       
     } catch (error: any) {
       console.error('Error processing audio:', error)
@@ -321,7 +342,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Error Message */}
+        {/* Error Messages */}
         {error && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -337,6 +358,51 @@ export default function HomePage() {
             </button>
           </motion.div>
         )}
+        
+        {/* Speech Error Message */}
+        {speechError && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mt-4 p-4 bg-yellow-100 border border-yellow-300 rounded-xl"
+          >
+            <p className="text-yellow-700 text-sm">🔊 {speechError}</p>
+            <button
+              onClick={clearSpeechError}
+              className="mt-2 text-yellow-600 underline text-sm"
+            >
+              閉じる
+            </button>
+          </motion.div>
+        )}
+        
+        {/* Speech Controls */}
+        <div className="mt-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">音声読み上げ:</span>
+            <button
+              onClick={() => setSpeechEnabled(!speechEnabled)}
+              className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                speechEnabled 
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200' 
+                  : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+              }`}
+            >
+              {speechEnabled ? <Volume2 size={14} /> : <VolumeX size={14} />}
+              {speechEnabled ? 'ON' : 'OFF'}
+            </button>
+          </div>
+          
+          {/* Stop Speech Button */}
+          {isSpeaking && (
+            <button
+              onClick={stopSpeech}
+              className="flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium hover:bg-red-200 transition-colors"
+            >
+              ⏹️ 停止
+            </button>
+          )}
+        </div>
 
         <AnimatePresence>
           {(messages.length > 0 || isThinking) && (
@@ -354,8 +420,14 @@ export default function HomePage() {
                     message.type === 'user' ? 'justify-end' : 'justify-start'
                   }`}>
                     {message.type === 'bot' && (
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 relative">
                         <Image src="/piggy-bank.png" alt="TANABUTA" width={48} height={48} />
+                        {/* Speaking indicator */}
+                        {isSpeaking && index === messages.length - 1 && (
+                          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full animate-ping"></div>
+                          </div>
+                        )}
                       </div>
                     )}
                     <div className="relative flex-1 max-w-xs">
@@ -364,7 +436,22 @@ export default function HomePage() {
                           ? 'bg-purple-500 text-white' 
                           : 'bg-white text-gray-800'
                       }`}>
-                        <p className="text-sm leading-relaxed">{message.text}</p>
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm leading-relaxed flex-1">{message.text}</p>
+                          {/* Audio indicator for bot messages */}
+                          {message.type === 'bot' && speechEnabled && (
+                            <div className="flex-shrink-0">
+                              {isSpeaking && index === messages.length - 1 ? (
+                                <div className="flex items-center gap-1 text-green-600">
+                                  <Volume2 size={16} className="animate-pulse" />
+                                  <span className="text-xs">再生中</span>
+                                </div>
+                              ) : (
+                                <Volume2 size={16} className="text-gray-400" />
+                              )}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {/* Speech bubble tail */}
                       <div className={`absolute top-1/2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent ${
@@ -407,6 +494,35 @@ export default function HomePage() {
                     </div>
                     {/* Speech bubble tail */}
                     <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-gray-100 border-b-8 border-b-transparent" />
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* Speech Synthesis indicator */}
+              {isSynthesizing && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className="mt-4 flex items-center gap-2"
+                >
+                  <div className="flex-shrink-0">
+                    <Image src="/piggy-bank-walking.png" alt="TANABUTA synthesizing speech" width={48} height={48} className="animate-pulse" />
+                  </div>
+                  <div className="relative flex-1">
+                    <div className="bg-blue-100 text-blue-600 p-4 rounded-xl shadow-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="flex space-x-1">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full animate-ping"></div>
+                          <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping" style={{ animationDelay: '200ms' }}></div>
+                          <div className="w-2 h-2 bg-blue-300 rounded-full animate-ping" style={{ animationDelay: '400ms' }}></div>
+                        </div>
+                        <span className="text-sm">🔊 音声を準備中...</span>
+                      </div>
+                    </div>
+                    {/* Speech bubble tail */}
+                    <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-blue-100 border-b-8 border-b-transparent" />
                   </div>
                 </motion.div>
               )}
