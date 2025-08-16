@@ -21,6 +21,7 @@ export default function HomePage() {
   const [error, setError] = useState('')
   const [recordingTime, setRecordingTime] = useState(0)
   const [speechEnabled, setSpeechEnabled] = useState(true)
+  const [sessionId, setSessionId] = useState<string | null>(null)
   
   // 音声合成フック
   const { isLoading: isSynthesizing, isPlaying: isSpeaking, error: speechError, speak, stop: stopSpeech, clearError: clearSpeechError } = useTextToSpeech()
@@ -221,11 +222,25 @@ export default function HomePage() {
       await new Promise(resolve => setTimeout(resolve, 500))
       
       console.log('フィードバックAPI呼び出し開始:', transcribedText)
+      console.log('現在のsession_id:', sessionId)
+      
+      // フィードバックAPIのリクエストボディを構築
+      const feedbackRequestBody: any = {
+        text: transcribedText,
+        user_id: 1 // ダミーユーザーID
+      }
+      
+      // session_idがある場合は含める（2回目以降）
+      if (sessionId) {
+        feedbackRequestBody.session_id = sessionId
+      }
+      
+      console.log('フィードバックAPIリクエスト:', feedbackRequestBody)
       
       // ステップ8: フィードバックAPI呼び出し（Next.js rewriteを使用してCORSを回避）
       const feedbackResponse = await axios.post(
         `/api/feedback`,
-        { text: transcribedText },
+        feedbackRequestBody,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -237,7 +252,15 @@ export default function HomePage() {
       
       console.log('フィードバックAPI応答:', feedbackResponse.data)
       
-      const botResponse = feedbackResponse.data.feedback
+      // レスポンス構造に応じて適切にデータを取得
+      const responseData = feedbackResponse.data.result || feedbackResponse.data
+      const botResponse = responseData.message || responseData.feedback
+      
+      // session_idが返された場合は保存（初回応答）
+      if (responseData.session_id && !sessionId) {
+        console.log('新しいsession_idを保存:', responseData.session_id)
+        setSessionId(responseData.session_id)
+      }
       
       if (!botResponse || botResponse.trim() === '') {
         throw new Error('TANABUTAちゃんからの応答を取得できませんでした')
@@ -276,7 +299,12 @@ export default function HomePage() {
       } else if (error.response?.status === 401) {
         setError('認証が必要です。ログインしてください。')
       } else if (error.response?.status >= 500) {
-        setError('サーバーエラーが発生しました。しばらく待ってからもう一度お試しください。')
+        // Azure backend特有のエラーをチェック
+        if (errorMessage && errorMessage.includes('RecipeWithUserAndRulesWithTriggerAndAction')) {
+          setError('現在サーバー側で技術的な問題が発生しています。開発チームが修正中です。しばらくしてからもう一度お試しください。')
+        } else {
+          setError('サーバーエラーが発生しました。しばらく待ってからもう一度お試しください。')
+        }
       } else if (errorMessage && errorMessage.includes('unsupported_country_region_territory')) {
         setError('申し訳ございません。現在この地域からはAI機能をご利用いただけません。開発チームが対応中です。')
       } else if (errorMessage && errorMessage.includes('Country, region, or territory not supported')) {
