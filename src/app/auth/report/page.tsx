@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -12,32 +12,55 @@ import SpeechBubble from "@/components/speech-bubble"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
-const monthlyData = [
-  { name: "生活費", value: 140456, color: "#60A5FA" },
-  { name: "変動費", value: 70228, color: "#34D399" },
-  { name: "推し活", value: 70228, color: "#FBBF24" },
-]
-
-const monthlyStats = {
-  income: 250608,
-  expense: 280912,
-  balance: -30304,
-  totalExpense: 213603,
-}
+type Category = { name: string; value: number; color: string }
+type Stats = { income: number; expense: number; balance: number; totalExpense: number }
 
 export default function ReportPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [viewType, setViewType] = useState<"monthly" | "yearly">("monthly")
-  const [currentMonth, setCurrentMonth] = useState("2025年7月")
+  const [currentMonth] = useState("2025年7月")
   const nickname = searchParams.get("name")
 
-  const yearlyData = monthlyData.map((item) => ({
-    ...item,
-    value: item.value * 12,
-  }))
+  const [monthlyData, setMonthlyData] = useState<Category[]>([])
+  const [monthlyStats, setMonthlyStats] = useState<Stats>({ income: 0, expense: 0, balance: 0, totalExpense: 0 })
+  const [insight, setInsight] = useState<string>("推し活への熱い思いはよく伝わったブヒ！でもちょっぴり推し活に使い過ぎているブヒ！")
 
-  const yearlyStats = {
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const uid = typeof window !== "undefined" ? localStorage.getItem("registered_user_id") : null
+        const qs = uid ? `?user_id=${encodeURIComponent(uid)}` : ""
+        const res = await fetch(`${base}/onboarding/financial-report${qs}`, { credentials: "include" })
+        if (!res.ok) throw new Error("レポートの取得に失敗しました")
+        const data = await res.json()
+        // カテゴリ別支出（カード支出のみ）
+        const categories: Category[] = (data?.expenses_by_category || []).map((c: any, idx: number) => ({
+          name: c.category,
+          value: Math.abs(c.total_amount || 0),
+          color: ["#60A5FA", "#34D399", "#FBBF24", "#F472B6", "#A78BFA", "#F87171"][idx % 6],
+        }))
+        setMonthlyData(categories)
+        // インサイト（最初の1件を吹き出しに表示）
+        if (Array.isArray(data?.insights) && data.insights.length > 0 && typeof data.insights[0] === "string") {
+          setInsight(data.insights[0])
+        }
+        // 収入/支出/収支 合計（サーバ計算値を使用）
+        const income = Number(data?.income_total || 0)
+        const expense = Number(data?.expense_total || 0)
+        const balance = Number(data?.balance_total || income - expense)
+        const totalExpense = categories.reduce((s, c) => s + c.value, 0)
+        setMonthlyStats({ income, expense, balance, totalExpense })
+      } catch (e) {
+        // フォールバック: 空のまま
+      }
+    }
+    load()
+  }, [])
+
+  const yearlyData = monthlyData.map((item) => ({ ...item, value: item.value * 12 }))
+  const yearlyStats: Stats = {
     income: monthlyStats.income * 12,
     expense: monthlyStats.expense * 12,
     balance: monthlyStats.balance * 12,
@@ -71,9 +94,7 @@ export default function ReportPage() {
           />
         </div>
         <SpeechBubble className="flex-1">
-          <p className="text-sm font-semibold text-gray-800">
-            推し活への熱い思いはよく伝わったブヒ！でもちょっぴり推し活に使い過ぎているブヒ！
-          </p>
+          <p className="text-sm font-semibold text-gray-800">{insight}</p>
         </SpeechBubble>
       </div>
 

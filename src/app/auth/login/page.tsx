@@ -34,12 +34,11 @@ export default function LoginPage() {
         credentials: "include",
       })
       if (!res.ok) {
-        let msg = "ログインに失敗しました"
+        const fallbackMsg = "とうろくしたメールアドレス or パスワードがまちがっています..."
         try {
-          const data = await res.json()
-          msg = data?.detail || msg
+          await res.json()
         } catch {}
-        throw new Error(msg)
+        throw new Error(fallbackMsg)
       }
       router.push("/home")
     } catch (e: any) {
@@ -82,7 +81,7 @@ export default function LoginPage() {
         />
 
         {error ? (
-          <p className="text-sm text-red-600 w-full text-center">{error}</p>
+          <p className={`text-[1.05rem] w-full text-center ${cherry.className} text-[#B547EB]`}>{error}</p>
         ) : null}
 
         {/* ログインボタン：色統一 + 中央揃え + disabledでも色を薄くしない */}

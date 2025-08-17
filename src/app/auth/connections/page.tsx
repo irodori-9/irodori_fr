@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -9,9 +9,24 @@ import SpeechBubble from "@/components/speech-bubble"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
-const CARD_OPTIONS = ["三友カード", "サゾンカード"]
+const STORAGE_KEY = "onboarding_preferences"
+type Pref = { question: string; selected_answers: string[] }
+const loadPrefs = (): Pref[] => {
+  try {
+    const s = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null
+    return s ? JSON.parse(s) : []
+  } catch {
+    return []
+  }
+}
+const savePref = (question: string, selected_answers: string[]) => {
+  const prefs = loadPrefs().filter((p) => p.question !== question)
+  const next = [...prefs, { question, selected_answers }]
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+}
 
-const BANK_OPTIONS = ["三菱友好銀行", "三友銀行"]
+const CARD_OPTIONS_FALLBACK = ["三友カード", "サゾンカード"]
+const BANK_OPTIONS_FALLBACK = ["三友銀行"]
 
 export default function ConnectionsPage() {
   const router = useRouter()
@@ -19,6 +34,24 @@ export default function ConnectionsPage() {
   const nickname = useMemo(() => decodeURIComponent(params.get("name") || ""), [params])
   const [selectedCard, setSelectedCard] = useState<string>("")
   const [selectedBank, setSelectedBank] = useState<string>("")
+  const [cards, setCards] = useState<string[]>(CARD_OPTIONS_FALLBACK)
+  const [banks, setBanks] = useState<string[]>(BANK_OPTIONS_FALLBACK)
+  const [question, setQuestion] = useState<string>("いま支払いに使っているカードと銀行を教えてブヒ！")
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const res = await fetch(`${base}/onboarding/financial-providers`, { credentials: "include" })
+        if (!res.ok) throw new Error("候補の取得に失敗しました")
+        const data = await res.json()
+        if (Array.isArray(data?.cards) && data.cards.length > 0) setCards(data.cards)
+        if (Array.isArray(data?.banks) && data.banks.length > 0) setBanks(data.banks)
+        if (typeof data?.question === "string" && data.question) setQuestion(data.question)
+      } catch {}
+    }
+    load()
+  }, [])
 
   const canNext = selectedCard !== "" && selectedBank !== ""
 
@@ -47,13 +80,13 @@ export default function ConnectionsPage() {
               className="shrink-0"
             />
             <SpeechBubble>
-              <p className="text-sm font-semibold text-gray-800">いま支払いに使っているカードと銀行を教えてブヒ！</p>
+              <p className="text-sm font-semibold text-gray-800">{question}</p>
             </SpeechBubble>
           </div>
         </div>
 
         <div className={`${wide} mx-auto space-y-3`}>
-          {CARD_OPTIONS.map((option) => {
+          {cards.map((option) => {
             const active = selectedCard === option
             return (
               <button
@@ -74,7 +107,7 @@ export default function ConnectionsPage() {
             )
           })}
 
-          {BANK_OPTIONS.map((option) => {
+          {banks.map((option) => {
             const active = selectedBank === option
             return (
               <button
@@ -99,9 +132,30 @@ export default function ConnectionsPage() {
         <div className="w-full mt-12">
           <Button
             disabled={!canNext}
-            onClick={() => {
-              const to = nickname ? `/auth/analyzing?name=${encodeURIComponent(nickname)}` : "/auth/analyzing"
-              router.push(to)
+            onClick={async () => {
+              try {
+                // 直前2問を保存
+                savePref("連携カード", [selectedCard])
+                savePref("連携銀行", [selectedBank])
+                // 一括送信（未ログインでも user_id を付与して保存可能に）
+                const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+                const payload = loadPrefs()
+                const uid = typeof window !== "undefined" ? localStorage.getItem("registered_user_id") : null
+                const qs = uid ? `?user_id=${encodeURIComponent(uid)}` : ""
+                const res = await fetch(`${base}/onboarding/preferences${qs}`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  credentials: "include",
+                  body: JSON.stringify(payload),
+                })
+                if (!res.ok) throw new Error("回答の保存に失敗しました")
+                // 送信成功でクリア
+                sessionStorage.removeItem(STORAGE_KEY)
+                const to = nickname ? `/auth/analyzing?name=${encodeURIComponent(nickname)}` : "/auth/analyzing"
+                router.push(to)
+              } catch (e) {
+                alert((e as Error).message)
+              }
             }}
             className={`${btnBase} ${canNext ? btnEnabled : btnDisabled}`}
           >

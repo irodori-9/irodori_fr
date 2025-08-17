@@ -9,6 +9,22 @@ import SpeechBubble from "@/components/speech-bubble"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
+const STORAGE_KEY = "onboarding_preferences"
+type Pref = { question: string; selected_answers: string[] }
+const loadPrefs = (): Pref[] => {
+  try {
+    const s = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null
+    return s ? JSON.parse(s) : []
+  } catch {
+    return []
+  }
+}
+const savePref = (question: string, selected_answers: string[]) => {
+  const prefs = loadPrefs().filter((p) => p.question !== question)
+  const next = [...prefs, { question, selected_answers }]
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+}
+
 const PREPARATION_OPTIONS = [
   "備え？なにもしてないブヒ〜...",
   "貯金もあんまりないしちょっと不安ブヒ",
@@ -101,6 +117,7 @@ export default function PreparationPage() {
           <Button
             disabled={!canNext}
             onClick={() => {
+              savePref("将来の備えレベル", [selected])
               const to = nickname ? `/auth/goals?name=${encodeURIComponent(nickname)}` : "/auth/goals"
               router.push(to)
             }}

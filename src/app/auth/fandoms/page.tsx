@@ -9,6 +9,22 @@ import SpeechBubble from "@/components/speech-bubble"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
+const STORAGE_KEY = "onboarding_preferences"
+type Pref = { question: string; selected_answers: string[] }
+const loadPrefs = (): Pref[] => {
+  try {
+    const s = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null
+    return s ? JSON.parse(s) : []
+  } catch {
+    return []
+  }
+}
+const savePref = (question: string, selected_answers: string[]) => {
+  const prefs = loadPrefs().filter((p) => p.question !== question)
+  const next = [...prefs, { question, selected_answers }]
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+}
+
 const OPTIONS = [
   "キャラクター",
   "マンガ",
@@ -123,6 +139,7 @@ export default function FandomsPage() {
           <Button
             disabled={!canNext}
             onClick={() => {
+              savePref("推しのジャンル", selected)
               router.push(`/auth/activities?name=${encodeURIComponent(nickname)}`)
             }}
             className={`${btnBase} ${canNext ? btnEnabled : btnDisabled}`}

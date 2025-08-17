@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,23 @@ const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "sw
 
 export default function NicknamePage() {
   const router = useRouter()
+  const params = useSearchParams()
   const [nickname, setNickname] = useState("")
+  const [userId, setUserId] = useState<string | null>(null)
+
+  useEffect(() => {
+    // URLクエリ優先、なければlocalStorage
+    const q = params.get("id")
+    if (q) {
+      setUserId(q)
+      try { localStorage.setItem("registered_user_id", q) } catch {}
+      return
+    }
+    try {
+      const uid = localStorage.getItem("registered_user_id")
+      if (uid) setUserId(uid)
+    } catch {}
+  }, [params])
 
   const canNext = nickname.trim().length > 0
   const wide = "w-[84%] sm:w-[80%]"
@@ -62,10 +79,33 @@ export default function NicknamePage() {
 
             <Button
               disabled={!canNext}
-              onClick={() => {
-                const name = encodeURIComponent(nickname.trim())
-                const to = name ? `/auth/fandoms?name=${name}` : "/auth/fandoms"
-                router.push(to)
+              onClick={async () => {
+                const nn = nickname.trim()
+                if (!nn) return
+                try {
+                  const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+                  // 直前の登録で作成された一時ユーザーIDをlocalStorageから取得（登録時にセット済み想定）
+                  const tmpUserId = userId || localStorage.getItem("registered_user_id")
+                  if (!tmpUserId) throw new Error("ユーザーの登録情報が見つかりません。はじめからやり直してください。")
+                  const res = await fetch(`${base}/onboarding/nickname`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: Number(tmpUserId), nickname: nn }),
+                  })
+                  if (!res.ok) {
+                    let msg = "ニックネームの設定に失敗しました"
+                    try {
+                      const data = await res.json()
+                      if (typeof data?.detail === "string") msg = data.detail
+                    } catch {}
+                    throw new Error(msg)
+                  }
+                  const name = encodeURIComponent(nn)
+                  const to = name ? `/auth/fandoms?name=${name}` : "/auth/fandoms"
+                  router.push(to)
+                } catch (e: any) {
+                  alert(e?.message || "ニックネームの設定に失敗しました")
+                }
               }}
               className={`${btnBase} ${canNext ? btnEnabled : btnDisabled}`}
             >

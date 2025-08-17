@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Cherry_Bomb_One } from "next/font/google"
@@ -86,82 +86,104 @@ export default function RecommendationsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [selectedRecipe, setSelectedRecipe] = useState<number | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [recipes, setRecipes] = useState<
+    {
+      templateId: number
+      title: string
+      description: string
+      categories: { type: string; items: string[]; color: string }[]
+      adoptionCount: number
+      creator: string
+    }[]
+  >([])
 
-  const recipes = [
-    {
-      title: "ジュースを水に変える魔法",
-      description: "理由：日々の小さな浪費を見直したい人！",
-      categories: [
-        {
-          type: "貯金",
-          items: ["毎月の収入の10%を貯蓄"],
-          color: "bg-purple-100 text-purple-800",
-        },
-        {
-          type: "節約",
-          items: ["毎日の「余計な習慣支出」を1日おきに減らすチャレンジ", "減らした分は自動で「目標貯金」へ移動"],
-          color: "bg-green-100 text-green-800",
-        },
-      ],
-      adoptionCount: 112,
-      creator: "りじちょー",
-    },
-    {
-      title: "ヒヨコ貯金チャレンジ",
-      description: "理由：日々の小さな浪費を見直したい人！",
-      categories: [
-        {
-          type: "貯金",
-          items: [
-            "月末に残った金額の10%を「おつり貯金」",
-            "毎週500円ずつ自動で貯金",
-            "支出の1%を自動で貯金",
-            "(例：コンビニで300円→3円貯金)",
-          ],
-          color: "bg-purple-100 text-purple-800",
-        },
-        {
-          type: "節約",
-          items: ["お昼のランチ代を700円以内にする"],
-          color: "bg-green-100 text-green-800",
-        },
-      ],
-      adoptionCount: 200,
-      creator: "はとちゃん",
-    },
-    {
-      title: "WHY 浪費 PEOPLE！？🔥",
-      description: "理由：ストイックに節約し資産形成！",
-      categories: [
-        {
-          type: "貯金",
-          items: ["推し活・好きなことに使った金額の10%を貯金"],
-          color: "bg-purple-100 text-purple-800",
-        },
-        {
-          type: "投資",
-          items: ["毎月の給与から30,000円をNISAで全世界株式を購入"],
-          color: "bg-blue-100 text-blue-800",
-        },
-        {
-          type: "節約",
-          items: ["お昼のランチ代を500円以内にする", "コンビニでつい買ってしまうお菓子の購入は禁止"],
-          color: "bg-green-100 text-green-800",
-        },
-      ],
-      adoptionCount: 5,
-      creator: "みっつ",
-    },
-  ]
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+        const uid = typeof window !== "undefined" ? localStorage.getItem("registered_user_id") : null
+        if (!uid) return
+        const res = await fetch(`${base}/onboarding/recommended_recipes?user_id=${encodeURIComponent(uid)}`, {
+          credentials: "include",
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (!Array.isArray(data)) return
+
+        const categoryStyleMap: Record<string, { type: string; color: string }> = {
+          INCREASE_SAVINGS: { type: "貯金", color: "bg-purple-100 text-purple-800" },
+          REDUCE_EXPENSES: { type: "節約", color: "bg-green-100 text-green-800" },
+          ASSET_MANAGEMENT: { type: "投資", color: "bg-blue-100 text-blue-800" },
+          貯金: { type: "貯金", color: "bg-purple-100 text-purple-800" },
+          節約: { type: "節約", color: "bg-green-100 text-green-800" },
+          投資: { type: "投資", color: "bg-blue-100 text-blue-800" },
+        }
+
+        const mapped = data.map((item: any) => {
+          const groups: Record<string, { type: string; items: string[]; color: string }> = {}
+          const rules: any[] = Array.isArray(item?.rules) ? item.rules : []
+          for (const rule of rules) {
+            const catKey = String(rule?.category || "OTHER")
+            const style = categoryStyleMap[catKey] || { type: "その他", color: "bg-gray-100 text-gray-800" }
+            if (!groups[style.type]) groups[style.type] = { type: style.type, items: [], color: style.color }
+            const ruleName = typeof rule?.name === "string" && rule.name ? rule.name : "ルール"
+            groups[style.type].items.push(ruleName)
+          }
+
+          const templateId = Number(item?.id || 0)
+          const title = typeof item?.name === "string" ? item.name : "おすすめレシピ"
+          const description = typeof item?.description === "string" ? item.description : ""
+          const adoptionCount = Number(item?.likes_count || 0)
+          const creator = (
+            ((item?.user?.nickname as string) ?? [item?.user?.last_name, item?.user?.first_name].filter(Boolean).join(" ")) ||
+            "ユーザー"
+          )
+
+          return {
+            templateId,
+            title,
+            description,
+            categories: Object.values(groups),
+            adoptionCount,
+            creator,
+          }
+        })
+
+        setRecipes(mapped)
+      } catch {
+        // noop
+      }
+    }
+    load()
+  }, [])
 
   const btnBase = "w-[80%] mx-auto block h-14 rounded-full text-lg font-normal transition-all duration-200"
   const btnEnabled = "bg-[#B547EB] hover:bg-[#B547EB]/90 text-white shadow-[0_10px_24px_rgba(181,71,235,0.35)]"
   const btnDisabled =
     "bg-gradient-to-b from-[#ffffff] to-[#e1e0e2] text-white shadow-[0_8px_24px_rgba(0,0,0,0.12)] ring-1 ring-black/5"
 
-  const handleNext = () => {
-    if (selectedRecipe !== null) {
+  const handleNext = async () => {
+    if (selectedRecipe === null) return
+    try {
+      setSubmitting(true)
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      const uid = typeof window !== "undefined" ? localStorage.getItem("registered_user_id") : null
+      if (!uid) return
+      const chosen = recipes[selectedRecipe]
+      if (!chosen || !chosen.templateId) return
+      const res = await fetch(`${base}/onboarding/recipe`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user_id: Number(uid), template_id: Number(chosen.templateId) }),
+      })
+      if (!res.ok) throw new Error("レシピの作成に失敗しました")
       router.push("/home")
+    } catch (e) {
+      // noop
+    } finally {
+      setSubmitting(false)
     }
   }
 
@@ -189,8 +211,8 @@ export default function RecommendationsPage() {
       <div className="w-full">
         <Button
           onClick={handleNext}
-          disabled={selectedRecipe === null}
-          className={`${btnBase} ${selectedRecipe !== null ? btnEnabled : btnDisabled}`}
+          disabled={selectedRecipe === null || submitting}
+          className={`${btnBase} ${selectedRecipe !== null && !submitting ? btnEnabled : btnDisabled}`}
         >
           <span className={`${cherry.className} tracking-[0.06em]`}>つぎへ</span>
         </Button>

@@ -232,10 +232,7 @@ export default function RegisterPage() {
     birthdayMonth: "",
     birthdayDay: "",
     job: "",
-    zip: "",
-    address: "",
     email: "",
-    phone: "",
     password: "",
     passwordConfirm: "",
   })
@@ -244,16 +241,7 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [triedSubmit, setTriedSubmit] = useState(false)
 
-  const digitsOnly = (s: string) => s.replace(/\D/g, "")
-  const isValidPostal = (s: string) => digitsOnly(s).length === 7
-  const formatPostal = (s: string) => {
-    const d = digitsOnly(s).slice(0, 7)
-    return d.length === 7 ? `${d.slice(0, 3)}-${d.slice(3)}` : s
-  }
-  const isValidPhone = (s: string) => {
-    const d = digitsOnly(s)
-    return d.length === 10 || d.length === 11
-  }
+  
 
   const canNext =
     form.last &&
@@ -262,10 +250,7 @@ export default function RegisterPage() {
     form.birthdayMonth &&
     form.birthdayDay &&
     form.job &&
-    isValidPostal(form.zip) &&
-    form.address &&
     form.email &&
-    isValidPhone(form.phone) &&
     form.password.length >= 8 &&
     form.password === form.passwordConfirm
 
@@ -292,9 +277,6 @@ export default function RegisterPage() {
     if (!form.first.trim()) errs.first = "名は必須です"
     if (!form.email.trim()) errs.email = "メールアドレスは必須です"
     if (!form.birthdayYear || !form.birthdayMonth || !form.birthdayDay) errs.birthdate = "生年月日は必須です"
-    if (!form.zip.trim()) errs.zip = "郵便番号は必須です"
-    if (!form.address.trim()) errs.address = "住所は必須です"
-    if (!form.phone.trim()) errs.phone = "電話番号は必須です"
     if (!form.job.trim()) errs.job = "職業は必須です"
     if (!form.password) errs.password = "パスワードは必須です"
     if (!form.passwordConfirm) errs.passwordConfirm = "パスワード確認は必須です"
@@ -315,18 +297,7 @@ export default function RegisterPage() {
       errs.passwordConfirm = "パスワードが一致しません"
     }
 
-    // 郵便番号形式（123-4567）
-    const postalCodeRegex = /^\d{3}-\d{4}$/
-    const formattedZip = isValidPostal(form.zip) ? formatPostal(form.zip) : form.zip
-    if (form.zip && !postalCodeRegex.test(formattedZip)) {
-      errs.zip = "郵便番号は123-4567の形式で入力してください"
-    }
-
-    // 電話番号（数字のみ10-11桁）
-    const phoneDigits = form.phone.replace(/\D/g, "")
-    if (form.phone && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      errs.phone = "電話番号は10-11桁の数字で入力してください"
-    }
+    
 
     setFieldErrors(errs)
     return Object.keys(errs).length === 0
@@ -405,36 +376,7 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <Input
-          placeholder="郵便番号（例：123-4567）"
-          value={form.zip}
-          onChange={(e) => {
-            set("zip")(e.target.value)
-            if (triedSubmit && fieldErrors.zip) setFieldErrors((s) => ({ ...s, zip: "" }))
-          }}
-          onBlur={() => {
-            if (isValidPostal(form.zip)) {
-              set("zip")(formatPostal(form.zip))
-              if (triedSubmit) setFieldErrors((s) => ({ ...s, zip: "" }))
-            } else {
-              if (triedSubmit) setFieldErrors((s) => ({ ...s, zip: "郵便番号は123-4567の形式で入力してください" }))
-            }
-          }}
-          className={inputClass}
-        />
-        {triedSubmit && fieldErrors.zip ? <p className="text-sm text-[#B547EB]">{fieldErrors.zip}</p> : null}
-        <Input
-          placeholder="住所"
-          value={form.address}
-          onChange={(e) => {
-            set("address")(e.target.value)
-            if (triedSubmit && fieldErrors.address) setFieldErrors((s) => ({ ...s, address: "" }))
-          }}
-          className={inputClass}
-        />
-        {triedSubmit && fieldErrors.address ? (
-          <p className="text-sm text-[#B547EB]">{fieldErrors.address}</p>
-        ) : null}
+        
         <Input
           placeholder="メールアドレス"
           type="email"
@@ -448,26 +390,7 @@ export default function RegisterPage() {
         {triedSubmit && fieldErrors.email ? (
           <p className="text-sm text-[#B547EB]">{fieldErrors.email}</p>
         ) : null}
-        <Input
-          placeholder="電話番号（10桁 or 11桁の数字, ハイフンなし）"
-          value={form.phone}
-          onChange={(e) => {
-            set("phone")(e.target.value)
-            if (triedSubmit && fieldErrors.phone) setFieldErrors((s) => ({ ...s, phone: "" }))
-          }}
-          onBlur={() => {
-            if (!isValidPhone(form.phone)) {
-              if (triedSubmit)
-                setFieldErrors((s) => ({ ...s, phone: "電話番号は10-11桁の数字で入力してください" }))
-            } else {
-              if (triedSubmit) setFieldErrors((s) => ({ ...s, phone: "" }))
-            }
-          }}
-          className={inputClass}
-        />
-        {triedSubmit && fieldErrors.phone ? (
-          <p className="text-sm text-[#B547EB]">{fieldErrors.phone}</p>
-        ) : null}
+        
         <Input
           placeholder="パスワード（8文字以上）"
           type="password"
@@ -515,9 +438,6 @@ export default function RegisterPage() {
                 first_name: form.first,
                 email: form.email,
                 birthdate: `${form.birthdayYear}-${String(form.birthdayMonth).padStart(2, "0")}-${String(form.birthdayDay).padStart(2, "0")}`,
-                postal_code: formatPostal(form.zip),
-                address: form.address,
-                phone_number: form.phone,
                 occupation: form.job,
                 company_name: "イロドリ株式会社", // 固定値
                 password: form.password,
@@ -539,9 +459,14 @@ export default function RegisterPage() {
                 } catch {}
                 throw new Error(msg)
               }
-              // 完了後は irodori 仕様にならいログイン画面へ
-              alert("登録が完了しました！ログインページに移動します。")
-              router.push("/auth/login")
+              // 作成されたユーザーIDを保存
+              const created = await res.json()
+              if (created?.id) {
+                try { localStorage.setItem("registered_user_id", String(created.id)) } catch {}
+              }
+              // 完了後は同意画面へ遷移
+              alert("登録が完了しました！同意ページに移動します。")
+              router.push("/auth/consent")
             } catch (e: any) {
               setError(e?.message || "登録に失敗しました")
             } finally {

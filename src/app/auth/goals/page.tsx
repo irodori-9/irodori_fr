@@ -10,6 +10,22 @@ import SpeechBubble from "@/components/speech-bubble"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
+const STORAGE_KEY = "onboarding_preferences"
+type Pref = { question: string; selected_answers: string[] }
+const loadPrefs = (): Pref[] => {
+  try {
+    const s = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null
+    return s ? JSON.parse(s) : []
+  } catch {
+    return []
+  }
+}
+const savePref = (question: string, selected_answers: string[]) => {
+  const prefs = loadPrefs().filter((p) => p.question !== question)
+  const next = [...prefs, { question, selected_answers }]
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+}
+
 const GOAL_OPTIONS = [
   "推し活以外の生活費に手を出さないようにしたいブヒ",
   "旅行などの推し以外の楽しみのために貯蓄したいブヒ",
@@ -101,6 +117,8 @@ export default function GoalsPage() {
           <Button
             disabled={!canNext}
             onClick={() => {
+              const selectedAnswers = selected === "自由記述（なんでも書いていいブヒよ〜）" ? [freeText] : [selected]
+              savePref("お金の目標", selectedAnswers)
               const to = nickname ? `/auth/connections?name=${encodeURIComponent(nickname)}` : "/auth/connections"
               router.push(to)
             }}

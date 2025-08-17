@@ -63,7 +63,14 @@ export default function ConsentPage() {
       <div className="pt-2">
         <Button
           disabled={!agreed}
-          onClick={() => router.push("/auth/nickname")}
+          onClick={() => {
+            let to = "/auth/nickname"
+            try {
+              const uid = typeof window !== "undefined" ? localStorage.getItem("registered_user_id") : null
+              if (uid) to = `/auth/nickname?id=${encodeURIComponent(uid)}`
+            } catch {}
+            router.push(to)
+          }}
           className={`${btnBase} ${agreed ? btnEnabled : btnDisabled}`}
         >
           <span className={`${cherry.className} tracking-[0.06em]`}>つぎへ</span>
