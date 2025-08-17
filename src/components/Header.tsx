@@ -25,16 +25,18 @@ export default function Header({ subtitle }: HeaderProps = {}) {
           <button
             onClick={() => router.back()}
             className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+            aria-label="戻る"
           >
             <ArrowLeft size={20} />
           </button>
         ) : (
-          <div className="w-9 h-9"></div> // Placeholder for alignment
+          <div className="w-9 h-9" aria-hidden="true"></div>
         )}
         <h1 className={`text-2xl font-bold ${cherryBombOne.className}`}>{subtitle || "たなぼた！"}</h1>
         <button 
           onClick={() => setIsPopupOpen(true)}
           className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
+          aria-label="メニュー"
         >
           <MoreHorizontal size={20} />
         </button>

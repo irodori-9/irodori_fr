@@ -25,7 +25,8 @@
       "mcp__playwright__browser_wait_for",
       "mcp__playwright__browser_evaluate",
       "Bash(git tag:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(git rm:*)"
     ],
     "deny": []
   }
