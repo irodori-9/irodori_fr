@@ -1,7 +1,7 @@
 "use client";
 
 import { Heart, AlertTriangle, Loader2, RefreshCw, Copy } from "lucide-react"
-import { useRecipes } from "@/hooks/useRecipes"
+import { useRecipes, UIRecipeData, UIRecommendedRecipeData } from "@/hooks/useRecipes"
 
 const PunchHoleSidebar = () => (
   <div className="w-16 bg-slate-100 rounded-l-2xl flex flex-col items-center justify-around py-4 border-r border-slate-200">
