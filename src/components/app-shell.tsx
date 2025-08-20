@@ -1,7 +1,7 @@
 "use client"
 
 import { usePathname } from "next/navigation"
-import Header from "@/components/header"
+import Header from "@/components/Header"
 import BottomNav from "@/components/bottom-nav"
 import type { PropsWithChildren } from "react"
 import Image from "next/image"

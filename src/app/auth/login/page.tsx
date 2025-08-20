@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Cherry_Bomb_One } from "next/font/google"
+import { useAuth } from "@/contexts/AuthContext"
 // axios 依存を避け、標準の fetch を使用
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
+  const { login } = useAuth()
 
   const canSubmit = email.length > 0 && password.length >= 6
   const btnWidth = "w-[84%] sm:w-[80%]" // 両ボタン共通の幅
@@ -27,21 +29,50 @@ export default function LoginPage() {
     setError("")
     try {
       const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
+      console.log('🔍 Login - Attempting login with:', { email, base })
+      
       const res = await fetch(`${base}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
         credentials: "include",
       })
+      
+      console.log('🔍 Login - Response received:', { 
+        ok: res.ok, 
+        status: res.status,
+        statusText: res.statusText
+      })
+      
       if (!res.ok) {
         const fallbackMsg = "とうろくしたメールアドレス or パスワードがまちがっています..."
         try {
-          await res.json()
+          const errorData = await res.json()
+          console.log('🔍 Login - Error response:', errorData)
         } catch {}
         throw new Error(fallbackMsg)
       }
+      
+      // ログイン成功時の応答を確認
+      const loginResponse = await res.json()
+      console.log('🔍 Login - Login response:', loginResponse)
+      
+      // ログイン成功後、メールアドレスからユーザーIDを取得（仮の実装）
+      // または認証状態を一時的に設定
+      console.log('🔍 Login - Setting temporary auth state with email:', email)
+      const tempUserObj = {
+        id: 1, // 仮のID - 実際のアプリケーションでは適切なユーザーIDを取得
+        nickname: undefined,
+        email: email,
+        isAuthenticated: true
+      }
+      console.log('🔍 Login - Calling login() with:', tempUserObj)
+      login(tempUserObj)
+      
+      console.log('🔍 Login - Redirecting to /home')
       router.push("/home")
     } catch (e: any) {
+      console.log('🔍 Login - Error occurred:', e)
       setError(e?.message || "ログインに失敗しました")
     } finally {
       setLoading(false)

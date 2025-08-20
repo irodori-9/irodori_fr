@@ -52,6 +52,13 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
       return
     }
 
+    // 長すぎるテキストの場合は警告を表示して音声合成をスキップ
+    const MAX_TEXT_LENGTH = 1000 // 最大1000文字
+    if (text.trim().length > MAX_TEXT_LENGTH) {
+      setError(`テキストが長すぎます（${text.trim().length}文字）。音声合成は${MAX_TEXT_LENGTH}文字以下で行ってください。`)
+      return
+    }
+
     try {
       setIsLoading(true)
       setError(null)
@@ -73,10 +80,18 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
         postPhonemeLength: options.postPhonemeLength ?? 0
       }
 
+      // テキストの長さに基づいてタイムアウト時間を動的に設定
+      const textLength = text.trim().length
+      const baseTimeout = 60000 // 基本60秒
+      const extraTimePerChar = 50 // 文字あたり50ms追加
+      const dynamicTimeout = Math.max(baseTimeout, textLength * extraTimePerChar)
+      
+      console.log(`🔊 音声合成タイムアウト設定: ${dynamicTimeout}ms (テキスト長: ${textLength}文字)`)
+
       // 音声合成APIを呼び出し
       const response = await axios.post('/api/speech', speechParams, {
         responseType: 'blob',
-        timeout: 30000, // 30秒タイムアウト
+        timeout: dynamicTimeout,
         headers: {
           'Content-Type': 'application/json'
         }

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
 
-// 一時的なダミー実装（基準値測定用）
 export interface UIRecipeData {
   id: string;
   title: string;
@@ -28,30 +28,104 @@ export interface UIRecommendedRecipeData {
 }
 
 export function useRecipes() {
-  const [recipes, setRecipes] = useState<UIRecipeData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [recommendedRecipes, setRecommendedRecipes] = useState<UIRecommendedRecipeData[]>([]);
-  const [recommendedLoading, setRecommendedLoading] = useState(true);
-  const [recommendedError, setRecommendedError] = useState<string | null>(null);
+  const { user } = useAuth()
+  const [recipes, setRecipes] = useState<UIRecipeData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [recommendedRecipes, setRecommendedRecipes] = useState<UIRecommendedRecipeData[]>([])
+  const [recommendedLoading, setRecommendedLoading] = useState(true)
+  const [recommendedError, setRecommendedError] = useState<string | null>(null)
+
+  const fetchRecipes = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      
+      if (!user?.id) {
+        setError('レシピを表示するにはログインが必要です')
+        setLoading(false)
+        return
+      }
+
+      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${backendUrl}/onboarding/recipes?user_id=${user.id}`)
+      
+      if (!response.ok) {
+        throw new Error('レシピの取得に失敗しました')
+      }
+      
+      const recipes = await response.json()
+      // API仕様に基づいてデータを変換
+      const uiRecipes = recipes.map((recipe: any) => ({
+        id: recipe.id.toString(),
+        title: recipe.name,
+        description: recipe.description,
+        status: "適用中",
+        details: recipe.rules?.map((rule: any) => ({
+          label: rule.category || "ルール",
+          color: "bg-blue-50",
+          items: [rule.description || rule.name]
+        })) || []
+      }))
+      setRecipes(uiRecipes)
+    } catch (err: any) {
+      setError(err.message || 'レシピの取得に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchRecommendedRecipes = async () => {
+    try {
+      setRecommendedLoading(true)
+      setRecommendedError(null)
+      
+      if (!user?.id) {
+        setRecommendedError('おすすめレシピを表示するにはログインが必要です')
+        setRecommendedLoading(false)
+        return
+      }
+
+      const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+      const response = await fetch(`${backendUrl}/onboarding/recommended_recipes?user_id=${user.id}`)
+      
+      if (!response.ok) {
+        throw new Error('おすすめレシピの取得に失敗しました')
+      }
+      
+      const recommendedRecipes = await response.json()
+      // API仕様に基づいてデータを変換
+      const uiRecommendedRecipes = recommendedRecipes.map((recipe: any) => ({
+        id: recipe.id.toString(),
+        title: recipe.name,
+        author: recipe.user?.nickname || `${recipe.user?.first_name} ${recipe.user?.last_name}` || "不明",
+        description: recipe.description,
+        likes_count: recipe.likes_count || 0,
+        copies_count: recipe.copies_count || 0,
+        details: recipe.rules?.map((rule: any) => ({
+          label: rule.category || "ルール",
+          color: "bg-green-50",
+          items: [rule.description || rule.name]
+        })) || []
+      }))
+      setRecommendedRecipes(uiRecommendedRecipes)
+    } catch (err: any) {
+      setRecommendedError(err.message || 'おすすめレシピの取得に失敗しました')
+    } finally {
+      setRecommendedLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // ダミーデータでの初期化
-    setTimeout(() => {
-      setRecipes([]);
-      setRecommendedRecipes([]);
-      setLoading(false);
-      setRecommendedLoading(false);
-    }, 500);
-  }, []);
+    // 認証状態に関わらずレシピフェッチを開始
+    fetchRecipes()
+    fetchRecommendedRecipes()
+  }, [user?.id]) // user?.idの変化時にも再実行
 
   const refetch = () => {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
-  };
+    fetchRecipes()
+    fetchRecommendedRecipes()
+  }
 
   return {
     recipes,
@@ -61,5 +135,5 @@ export function useRecipes() {
     recommendedRecipes,
     recommendedLoading,
     recommendedError
-  };
+  }
 }

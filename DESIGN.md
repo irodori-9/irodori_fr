@@ -395,6 +395,9 @@ npm run lint   # ESLint チェック
 - **型定義**: TypeScript で厳密な型付け
 - **スタイリング**: Tailwind CSS クラスベース
 
+### 11.3 テストログインID(メールアドレス)とパスワード
+- **メールアドレス**: mitsurunano@gmail.com
+- **パスワード**:mitsurunagano
 ---
 
 **最終更新**: 2025年8月12日  

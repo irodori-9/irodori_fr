@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter, Cherry_Bomb_One } from "next/font/google"
 import "./globals.css"
 import AppShell from "@/components/app-shell"
+import { AuthProvider } from "@/contexts/AuthContext"
 
 const inter = Inter({ subsets: ["latin"], display: "swap" })
 const cherryBombOne = Cherry_Bomb_One({ subsets: ["latin"], weight: "400", display: "swap" })
@@ -28,7 +29,9 @@ export default function RootLayout({
           aria-hidden="true"
         />
         {/* 画面部分（max-w-md）とコンテンツ。背景より常に前面に出る */}
-        <AppShell>{children}</AppShell>
+        <AuthProvider>
+          <AppShell>{children}</AppShell>
+        </AuthProvider>
       </body>
     </html>
   )

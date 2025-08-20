@@ -4,7 +4,7 @@ import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { Button } from "@/components/Button"
+import { Button } from "@/components/ui/button"
 import { Cherry_Bomb_One } from "next/font/google"
 
 const cherryBombOne = Cherry_Bomb_One({ subsets: ["latin"], weight: "400", display: "swap" })

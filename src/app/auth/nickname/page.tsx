@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
@@ -11,7 +11,7 @@ import SpeechBubble from "@/components/speech-bubble"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
-export default function NicknamePage() {
+function NicknameContent() {
   const router = useRouter()
   const params = useSearchParams()
   const [nickname, setNickname] = useState("")
@@ -96,7 +96,16 @@ export default function NicknamePage() {
                     let msg = "ニックネームの設定に失敗しました"
                     try {
                       const data = await res.json()
-                      if (typeof data?.detail === "string") msg = data.detail
+                      if (typeof data?.detail === "string") {
+                        msg = data.detail
+                        // ニックネーム既設定の場合は次の画面に遷移
+                        if (data.detail === "ニックネームは既に設定済みです") {
+                          const name = encodeURIComponent(nn)
+                          const to = name ? `/auth/fandoms?name=${name}` : "/auth/fandoms"
+                          router.push(to)
+                          return
+                        }
+                      }
                     } catch {}
                     throw new Error(msg)
                   }
@@ -115,5 +124,13 @@ export default function NicknamePage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function NicknamePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <NicknameContent />
+    </Suspense>
   )
 }

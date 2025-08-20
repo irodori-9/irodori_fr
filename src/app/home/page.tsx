@@ -6,6 +6,8 @@ import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import axios from 'axios'
 import { useTextToSpeech } from '@/hooks/useTextToSpeech'
+import { useAuth } from '@/contexts/AuthContext'
+import { AuthGuard } from '@/components/AuthGuard'
 
 const summaryData = [
   { label: "貯金した額", value: "¥500,000" },
@@ -22,6 +24,10 @@ export default function HomePage() {
   const [recordingTime, setRecordingTime] = useState(0)
   const [speechEnabled, setSpeechEnabled] = useState(true)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  
+  // 認証フック
+  const { user } = useAuth()
+  
   
   // 音声合成フック
   const { isLoading: isSynthesizing, isPlaying: isSpeaking, error: speechError, speak, stop: stopSpeech, clearError: clearSpeechError } = useTextToSpeech()
@@ -224,10 +230,15 @@ export default function HomePage() {
       console.log('フィードバックAPI呼び出し開始:', transcribedText)
       console.log('現在のsession_id:', sessionId)
       
+      // 認証状態チェック
+      if (!user?.id) {
+        throw new Error('チャットボット機能を利用するにはログインが必要です。ログインしてから再度お試しください。')
+      }
+      
       // フィードバックAPIのリクエストボディを構築
       const feedbackRequestBody: any = {
         text: transcribedText,
-        user_id: 1 // ダミーユーザーID
+        user_id: user.id // 認証済みユーザーID
       }
       
       // session_idがある場合は含める（2回目以降）
@@ -348,8 +359,10 @@ export default function HomePage() {
     }
   }, [])
 
+
   return (
-    <div className="space-y-6">
+    <AuthGuard>
+      <div className="space-y-6">
       {/* Chatbot Card */}
       <motion.div
         layout
@@ -594,20 +607,37 @@ export default function HomePage() {
           )}
         </AnimatePresence>
 
-        <button
-          onClick={handleSpeakButtonClick}
-          disabled={isThinking}
-          className={`mt-4 w-full py-3 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all ${
-            isThinking 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : isListening 
-              ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90' 
-              : 'bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:opacity-90'
-          }`}
-        >
-          <Mic size={20} />
-          {isThinking ? '処理中...' : isListening ? '終了' : 'はなす'}
-        </button>
+        {/* 認証状態に基づくボタン表示 */}
+        {user?.id ? (
+          <button
+            onClick={handleSpeakButtonClick}
+            disabled={isThinking}
+            className={`mt-4 w-full py-3 text-white font-bold rounded-2xl flex items-center justify-center gap-2 shadow-lg transition-all ${
+              isThinking 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : isListening 
+                ? 'bg-gradient-to-r from-red-500 to-pink-500 hover:opacity-90' 
+                : 'bg-gradient-to-r from-purple-500 to-fuchsia-500 hover:opacity-90'
+            }`}
+          >
+            <Mic size={20} />
+            {isThinking ? '処理中...' : isListening ? '終了' : 'はなす'}
+          </button>
+        ) : (
+          <div className="mt-4 text-center">
+            <div className="bg-amber-100 border border-amber-300 rounded-2xl p-4 mb-3">
+              <p className="text-amber-800 text-sm font-medium">
+                🔒 チャットボット機能を利用するにはログインが必要です
+              </p>
+            </div>
+            <a 
+              href="/auth/login"
+              className="inline-block w-full py-3 bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold rounded-2xl hover:opacity-90 transition-opacity"
+            >
+              ログインページへ
+            </a>
+          </div>
+        )}
       </motion.div>
 
       {/* Monthly Summary */}
@@ -624,7 +654,8 @@ export default function HomePage() {
             </div>
           ))}
         </div>
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   )
 }

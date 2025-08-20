@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Cherry_Bomb_One } from "next/font/google"
 import { Heart, User } from "lucide-react"
+import { useAuth } from "@/contexts/AuthContext"
 
 const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
@@ -85,6 +86,7 @@ const RecipeCard = ({
 export default function RecommendationsPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { login } = useAuth()
   const [selectedRecipe, setSelectedRecipe] = useState<number | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [recipes, setRecipes] = useState<
@@ -179,6 +181,15 @@ export default function RecommendationsPage() {
         body: JSON.stringify({ user_id: Number(uid), template_id: Number(chosen.templateId) }),
       })
       if (!res.ok) throw new Error("レシピの作成に失敗しました")
+      
+      // オンボーディング完了時にAuthContextに認証情報をセット
+      if (uid) {
+        login({
+          id: Number(uid),
+          isAuthenticated: true,
+        })
+      }
+      
       router.push("/home")
     } catch (e) {
       // noop
