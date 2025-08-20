@@ -29,7 +29,8 @@
       "Bash(git rm:*)",
       "Bash(git show:*)",
       "mcp__playwright__browser_type",
-      "mcp__playwright__browser_network_requests"
+      "mcp__playwright__browser_network_requests",
+      "Bash(git checkout:*)"
     ],
     "deny": []
   }
