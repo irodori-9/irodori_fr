@@ -4,7 +4,7 @@ import { useState } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { ArrowLeft, MoreHorizontal } from "lucide-react"
 import { Cherry_Bomb_One } from "next/font/google"
-import TanabotaPopup from "./TanabotaPopup"
+import HeaderMenu from "./HeaderMenu"
 
 const cherryBombOne = Cherry_Bomb_One({ subsets: ["latin"], weight: "400", display: "swap" })
 
@@ -13,7 +13,7 @@ interface HeaderProps {
 }
 
 export default function Header({ subtitle }: HeaderProps = {}) {
-  const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const showBackButton = pathname === "/wallet"
@@ -34,7 +34,7 @@ export default function Header({ subtitle }: HeaderProps = {}) {
         )}
         <h1 className={`text-2xl font-bold ${cherryBombOne.className}`}>{subtitle || "たなぼた！"}</h1>
         <button 
-          onClick={() => setIsPopupOpen(true)}
+          onClick={() => setIsMenuOpen(true)}
           className="p-2 rounded-full bg-white/20 hover:bg-white/40 transition-colors"
           aria-label="メニュー"
         >
@@ -42,9 +42,9 @@ export default function Header({ subtitle }: HeaderProps = {}) {
         </button>
       </header>
       
-      <TanabotaPopup 
-        isOpen={isPopupOpen} 
-        onClose={() => setIsPopupOpen(false)} 
+      <HeaderMenu 
+        isOpen={isMenuOpen} 
+        onClose={() => setIsMenuOpen(false)} 
       />
     </>
   )
