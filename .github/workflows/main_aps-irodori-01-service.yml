@@ -29,6 +29,7 @@ jobs:
       - name: Clean and Install Dependencies
         run: |
           rm -f package-lock.json
+          npm cache clean --force
           npm install
 
       - name: Build application
@@ -39,7 +40,7 @@ jobs:
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app
+          name: node-app-${{ github.run_number }}
           path: .
 
 
@@ -51,7 +52,7 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app
+          name: node-app-${{ github.run_number }}
       
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
