@@ -21,7 +21,7 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '22.x'
 
       - name: npm install, build, and test
         run: |
@@ -52,4 +52,4 @@ jobs:
           app-name: 'aps-IRODORI-01-service'
           slot-name: 'Production'
           package: .
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_810D7504A712423FBC5CD9CA494D6B3B }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F0E9C33F765B4B56A224959CC04D6A5F }}
