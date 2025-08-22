@@ -2,19 +2,6 @@
   "name": "irodori-frontend",
   "version": "0.1.0",
   "private": true,
-  "description": "User authentication frontend with login, registration, and dashboard pages.",
-  "homepage": "https://github.com/irodori-9/irodori_fr#readme",
-  "bugs": {
-    "url": "https://github.com/irodori-9/irodori_fr/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/irodori-9/irodori_fr.git"
-  },
-  "license": "ISC",
-  "author": "",
-  "type": "commonjs",
-  "main": "next.config.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -92,4 +79,9 @@
     "tw-animate-css": "1.3.3",
     "typescript": "^5"
   }
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  }
+
 }
