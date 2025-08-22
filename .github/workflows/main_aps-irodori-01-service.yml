@@ -34,9 +34,17 @@ jobs:
           cp -r ./.next/static/. ./deploy/.next/static/ || echo "No static directory found"
           # publicフォルダがある場合はコピー
           cp -r ./public ./deploy/public || echo "No public directory found"
+          # 不要なファイルを除外
+          find ./deploy -name "*.map" -delete || true
+          find ./deploy -name ".git*" -delete || true
+          find ./deploy -name "node_modules/.cache" -type d -exec rm -rf {} + || true
+          # ファイル数を確認
+          echo "Total files in deploy: $(find ./deploy -type f | wc -l)"
 
       - name: Zip artifact for deployment
-        run: zip -r release.zip ./deploy
+        run: |
+          cd deploy
+          zip -r ../release.zip . -x "*.map" "node_modules/.cache/*"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -65,3 +73,4 @@ jobs:
           slot-name: 'Production'
           package: release.zip
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F0E9C33F765B4B56A224959CC04D6A5F }}
+          startup-file: 'server.js'
