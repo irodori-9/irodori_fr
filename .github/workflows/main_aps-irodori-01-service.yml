@@ -21,17 +21,6 @@ jobs:
           node-version: '22'
           cache: 'npm'
 
-      # Next.jsビルドキャッシュを追加
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
-          restore-keys: |
-            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
-
       - name: Install dependencies
         run: npm ci
 
@@ -40,19 +29,42 @@ jobs:
         env:
           NODE_ENV: production
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
-          NEXT_TELEMETRY_DISABLED: 1  # テレメトリー無効化（オプション）
+          NEXT_TELEMETRY_DISABLED: 1
 
-      # 画像の指示に従った修正: Copy artifact for deployment job
+      # 画像の指示通り: Copy artifact for deployment job
       - name: Copy artifact for deployment job
         run: |
           mkdir deploy
           cp -r ./.next/standalone/. ./deploy
-          cp -r ./public ./deploy
-          cp -r ./.next/static/. ./deploy/.next/static
+          cp -r ./public ./deploy || echo "No public directory found"
+          cp -r ./.next/static/. ./deploy/.next/static || echo "No static directory found"
+          
+          # Azure App Service用のserver.js作成
+          cat > ./deploy/server.js << 'EOF'
+          process.env.PORT = process.env.PORT || 8080;
+          const NextServer = require('next/dist/server/next-server').default;
+          const http = require('http');
 
-      # 画像の指示に従った修正: zipコマンドの修正
-      - name: Zip Release
-        run: zip release.zip ./deploy -r
+          const server = new NextServer({
+            hostname: '0.0.0.0',
+            port: process.env.PORT,
+            dir: __dirname,
+            dev: false,
+            customServer: false,
+          });
+
+          server.prepare().then(() => {
+            const app = server.getRequestHandler();
+            http.createServer(app).listen(process.env.PORT, (err) => {
+              if (err) throw err;
+              console.log(`> Ready on http://0.0.0.0:${process.env.PORT}`);
+            });
+          });
+          EOF
+
+      # 画像の指示通り: zipコマンドの修正
+      - name: Zip Release  
+        run: zip -r release.zip ./deploy
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -76,6 +88,6 @@ jobs:
         with:
           app-name: 'aps-IRODORI-01-service'
           slot-name: 'Production'
-          # 画像の指示に従った修正: packageパスの修正
+          # 画像の指示通り: packageパスの修正
           package: release.zip
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F0E9C33F765B4B56A224959CC04D6A5F }}
