@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // output: 'standalone', // ★ 追加（AppServiceでは非常に重要）
+  output: 'standalone', // ★ 追加（AppServiceでは非常に重要）
 
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
