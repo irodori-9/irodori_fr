@@ -1,5 +1,7 @@
 // ニュース機能の型定義
 
+import { LucideIcon } from "lucide-react";
+
 export interface NewsItem {
   category: string;
   title: string;
@@ -24,7 +26,7 @@ export interface NewsApiResponse {
 export interface NewsCategoryConfig {
   id: string;
   label: string;
-  icon: React.ComponentType<{ size?: number; className?: string }>;
+  icon: LucideIcon;
   colorClass: string;
 }
 
