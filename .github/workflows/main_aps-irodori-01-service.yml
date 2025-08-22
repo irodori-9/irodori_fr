@@ -26,8 +26,9 @@ jobs:
       - name: Copy artifact for deployment job
         run: |
           mkdir deploy
-          cp -r ./.next/standalone/.. ./deploy
-          cp -r ./.next/static/.. ./deploy/.next/static
+          cp -r ./.next/standalone/. ./deploy
+          mkdir -p ./deploy/.next/static
+          cp -r ./.next/static/. ./deploy/.next/static || echo "No static directory found"
 
       - name: Zip artifact for deployment
         run: zip release.zip ./deploy -r
