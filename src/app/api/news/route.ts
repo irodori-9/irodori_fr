@@ -1,19 +1,19 @@
-// ニュースAPI エンドポイント
-// public/news.csv から動的にニュースデータを取得
-
 import { NextRequest, NextResponse } from "next/server";
 import { readFileSync } from "fs";
 import { join } from "path";
 import { NewsItem, NewsData, NewsApiResponse } from "@/types/news";
 import { getValidCategories } from "@/config/news";
 
+// 静的プリレンダリングを避ける宣言（SSRで動かす場合推奨）
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
+    // ここを修正
+    const { searchParams } = request.nextUrl;
     const category = searchParams.get("category");
 
     if (category) {
-      // 特定カテゴリのニュースを取得
       const newsItems = await getNewsByCategory(category);
       return NextResponse.json({
         success: true,
@@ -22,7 +22,6 @@ export async function GET(request: NextRequest) {
         count: newsItems.length
       } as NewsApiResponse);
     } else {
-      // 全カテゴリのニュースを取得
       const allNews = await getAllNews();
       return NextResponse.json({
         success: true,
