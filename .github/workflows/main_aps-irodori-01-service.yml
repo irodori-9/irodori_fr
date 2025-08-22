@@ -19,10 +19,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'  # ★ キャッシュを有効化
+          cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci  # ★ npm installではなくnpm ciを使用
+        run: npm ci
 
       - name: Build application
         run: npm run build
@@ -38,17 +38,34 @@ jobs:
       - name: Create deployment package
         run: |
           mkdir deploy-package
-          # Next.js standalone出力の場合
+
+          # --- Standalone出力の場合 ---
           if [ -d ".next/standalone" ]; then
+            echo "Standalone mode detected"
             cp -r .next/standalone/* deploy-package/
-            cp -r .next/static deploy-package/.next/static
-            cp -r public deploy-package/public 2>/dev/null || true
+
+            if [ -d ".next/static" ]; then
+              mkdir -p deploy-package/.next/static
+              cp -r .next/static/* deploy-package/.next/static/
+            fi
+
+            if [ -d "public" ]; then
+              cp -r public deploy-package/
+            fi
+          # --- 通常出力の場合 ---
           else
-            # 通常出力の場合
+            echo "Regular mode detected"
             cp -r .next deploy-package/
-            cp -r public deploy-package/ 2>/dev/null || true
+            if [ -d "public" ]; then
+              cp -r public deploy-package/
+            fi
             cp package*.json deploy-package/
             cp -r node_modules deploy-package/
+          fi
+
+          # next.config.jsが必要なら含める
+          if [ -f "next.config.js" ]; then
+            cp next.config.js deploy-package/
           fi
 
       - name: Upload artifact for deployment job
@@ -69,7 +86,6 @@ jobs:
           name: node-app-${{ github.run_number }}
 
       - name: 'Deploy to Azure Web App'
-        id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'aps-IRODORI-01-service'
