@@ -41,8 +41,6 @@ jobs:
           cp -r ./public ./deploy || echo "No public directory found"
           # Copy static files to correct location
           cp -r ./.next/static/. ./deploy/.next/static || echo "No static directory found"
-          # Copy package.json for start script
-          cp package.json ./deploy/package.json
 
       # 画像の指示通り: zipコマンドの修正
       - name: Zip Release  
