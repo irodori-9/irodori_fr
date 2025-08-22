@@ -32,7 +32,10 @@
       "mcp__playwright__browser_network_requests",
       "Bash(git checkout:*)",
       "Bash(npm run build:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Bash(npm start)",
+      "Bash(PORT=3001 npm start)",
+      "Bash(PORT=3333 npm start)"
     ],
     "deny": []
   }
