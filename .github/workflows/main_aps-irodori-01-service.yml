@@ -41,6 +41,35 @@ jobs:
           cp -r ./public ./deploy || echo "No public directory found"
           # Copy static files to correct location
           cp -r ./.next/static/. ./deploy/.next/static || echo "No static directory found"
+          
+          # Create custom server.js to ensure compatibility
+          cat > ./deploy/server.js << 'EOF'
+          const { hostname } = require('os');
+          const http = require('http');
+          const path = require('path');
+
+          const nextServer = require('next/dist/server/next-server').default;
+
+          const port = process.env.PORT || 8000;
+          const dev = false;
+
+          const server = new nextServer({
+            hostname: '0.0.0.0',
+            port: port,
+            dir: __dirname,
+            dev: dev,
+            customServer: false,
+          });
+
+          server.prepare().then(() => {
+            const app = server.getRequestHandler();
+            
+            http.createServer(app).listen(port, '0.0.0.0', (err) => {
+              if (err) throw err;
+              console.log(`> Ready on http://0.0.0.0:${port}`);
+            });
+          });
+          EOF
 
       # 画像の指示通り: zipコマンドの修正
       - name: Zip Release  
