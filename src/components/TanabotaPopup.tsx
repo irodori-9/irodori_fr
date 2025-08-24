@@ -43,7 +43,7 @@ export default function TanabotaPopup({ isOpen, onClose }: TanabotaPopupProps) {
                 <p className="font-bold text-gray-800 mb-4">今日も推し事お疲れ様プヒ！</p>
                 
                 <div className="mb-4">
-                  <Image src="/piggy-bank.png" alt="TANABOTA character" width={80} height={80} className="mx-auto" />
+                  <Image src="/images/mascot/pig.png" alt="TANABOTA character" width={80} height={80} className="mx-auto" />
                 </div>
                 
                 <h3 className="text-2xl font-bold text-gray-800 mb-6">TANABOTAされました！</h3>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Heart, AlertTriangle, Loader2, RefreshCw, Copy } from "lucide-react"
+import { Heart, AlertTriangle, Loader2, RefreshCw, Copy, User } from "lucide-react"
 import { useRecipes, UIRecipeData, UIRecommendedRecipeData } from "@/hooks/useRecipes"
 
 const PunchHoleSidebar = () => (
@@ -168,7 +168,11 @@ function ActiveRecipeCard({ recipe }: ActiveRecipeCardProps) {
 
         <div className="mt-4 flex items-center gap-1.5">
           <Heart className="text-purple-400 fill-current" size={18} />
-          <span className="text-sm font-semibold text-purple-600">いいね</span>
+          <span className="text-sm font-semibold text-purple-600">{recipe.likes_count ?? 0}</span>
+          <div className="ml-auto flex items-center gap-1">
+            <User className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-500">{recipe.author ?? ""}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -181,39 +185,51 @@ interface RecommendedRecipeCardProps {
 }
 
 function RecommendedRecipeCard({ recipe }: RecommendedRecipeCardProps) {
+  // recommendations のカード風に整形（type/items/color 風）
+  const categories = recipe.details.map(d => ({
+    type: d.label,
+    items: d.items,
+    color: d.color.includes("purple") ? "bg-purple-100 text-purple-800"
+      : d.color.includes("green") ? "bg-green-100 text-green-800"
+      : d.color.includes("blue") ? "bg-blue-100 text-blue-800"
+      : "bg-slate-100 text-slate-800",
+  }))
+
   return (
-    <div className="flex rounded-2xl overflow-hidden border-2 border-transparent shadow-md hover:shadow-lg transition-all cursor-pointer group">
+    <div className="flex rounded-2xl overflow-hidden shadow-lg mb-6 border-2 border-[#D6D5D5] hover:border-purple-300 transition-all duration-200">
       <PunchHoleSidebar />
-      <div className="flex-1 bg-white p-4">
-        <div className="flex justify-between items-start mb-1">
-          <h3 className="font-bold text-lg text-gray-800 group-hover:text-gray-700">{recipe.title}</h3>
-        </div>
-        <p className="text-xs text-gray-500 mb-2">作成者: {recipe.author}</p>
-        <p className="text-xs text-gray-500 mb-4">{recipe.description}</p>
-
-        <div className="space-y-2">
-          {recipe.details.map((detail, i) => (
-            <div key={i} className={`${detail.color} p-3 rounded-lg`}>
-              <p className="text-xs font-bold">{detail.label}</p>
-              <ul className="mt-1 space-y-1">
-                {detail.items.map((item, j) => (
-                  <li key={j} className="text-sm font-medium text-gray-800 list-disc list-inside">
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      <div className="flex-1 bg-white p-2">
+        <div className="mb-2 mt-1">
+          <h3 className="font-bold text-lg text-gray-800 ml-2">{recipe.title}</h3>
         </div>
 
-        <div className="mt-4 flex items-center gap-4">
-          <div className="flex items-center gap-1.5">
-            <Heart className="text-purple-400 fill-current" size={16} />
-            <span className="text-sm font-semibold text-purple-600">{recipe.likes_count}</span>
+        <div className="mb-1 mt-1">
+          <p className="text-xs text-gray-500 mb-1 ml-2">{recipe.description}</p>
+        </div>
+
+        <div className="rounded-lg p-1 mb-2">
+          <div className="space-y-1">
+            {categories.map((category, index) => (
+              <div key={index} className={`${category.color} p-2 rounded-lg`}>
+                <div className="flex items-start">
+                  <span className="text-xs font-bold mr-4 mt-1">{category.type}</span>
+                  <div className="flex-1">
+                    {category.items.map((item, itemIndex) => (
+                      <div key={itemIndex} className="text-xs mb-1 text-black">• {item}</div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-          <div className="flex items-center gap-1.5">
-            <Copy className="text-blue-400" size={16} />
-            <span className="text-sm font-semibold text-blue-600">{recipe.copies_count}</span>
+        </div>
+
+        <div className="flex items-center gap-1.5 ml-2">
+          <Heart className="text-purple-400 fill-current" size={18} />
+          <span className="text-sm font-semibold text-purple-600">{recipe.likes_count}</span>
+          <div className="ml-auto flex items-center gap-1">
+            <User className="w-4 h-4 text-gray-400" />
+            <span className="text-sm text-gray-500">{recipe.author}</span>
           </div>
         </div>
       </div>

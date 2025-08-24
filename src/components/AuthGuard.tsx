@@ -28,7 +28,7 @@ export function AuthGuard({ children, redirectTo = '/auth/login' }: AuthGuardPro
         <div className="p-4 bg-purple-200/60 rounded-3xl shadow-lg overflow-hidden">
           <div className="flex items-center gap-2">
             <div className="flex-shrink-0">
-              <Image src="/piggy-bank.png" alt="Piggy bank character" width={80} height={80} />
+              <Image src="/images/mascot/pig.png" alt="Piggy bank character" width={80} height={80} />
             </div>
             <div className="relative flex-1">
               <div className="bg-white text-gray-800 p-4 rounded-xl shadow-sm">
