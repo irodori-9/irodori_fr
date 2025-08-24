@@ -6,6 +6,8 @@ export interface UIRecipeData {
   title: string;
   description: string;
   status: string;
+  author?: string;
+  likes_count?: number;
   details: Array<{
     label: string;
     color: string;
@@ -36,6 +38,15 @@ export function useRecipes() {
   const [recommendedLoading, setRecommendedLoading] = useState(true)
   const [recommendedError, setRecommendedError] = useState<string | null>(null)
 
+  // カテゴリ→色マッピング（recommendations と整合）
+  const mapCategoryToColor = (category: string | undefined): string => {
+    const key = (category || "").toString()
+    if (/(INCREASE_SAVINGS|貯金)/i.test(key)) return "bg-purple-100 text-purple-800"
+    if (/(ASSET_MANAGEMENT|投資)/i.test(key)) return "bg-blue-100 text-blue-800"
+    if (/(REDUCE_EXPENSES|節約)/i.test(key)) return "bg-green-100 text-green-800"
+    return "bg-slate-100 text-slate-800"
+  }
+
   const fetchRecipes = async () => {
     try {
       setLoading(true)
@@ -55,15 +66,17 @@ export function useRecipes() {
       }
       
       const recipes = await response.json()
-      // API仕様に基づいてデータを変換
+      // API仕様に基づいてデータを変換（色分けはカテゴリで判定）
       const uiRecipes = recipes.map((recipe: any) => ({
         id: recipe.id.toString(),
         title: recipe.name,
         description: recipe.description,
         status: "適用中",
+        author: recipe.user?.nickname || `${recipe.user?.first_name} ${recipe.user?.last_name}` || "不明",
+        likes_count: 0,
         details: recipe.rules?.map((rule: any) => ({
           label: rule.category || "ルール",
-          color: "bg-blue-50",
+          color: mapCategoryToColor(rule.category),
           items: [rule.description || rule.name]
         })) || []
       }))
@@ -94,7 +107,7 @@ export function useRecipes() {
       }
       
       const recommendedRecipes = await response.json()
-      // API仕様に基づいてデータを変換
+      // API仕様に基づいてデータを変換（色分けはカテゴリで判定）
       const uiRecommendedRecipes = recommendedRecipes.map((recipe: any) => ({
         id: recipe.id.toString(),
         title: recipe.name,
@@ -104,7 +117,7 @@ export function useRecipes() {
         copies_count: recipe.copies_count || 0,
         details: recipe.rules?.map((rule: any) => ({
           label: rule.category || "ルール",
-          color: "bg-green-50",
+          color: mapCategoryToColor(rule.category),
           items: [rule.description || rule.name]
         })) || []
       }))

@@ -371,7 +371,7 @@ export default function HomePage() {
       >
         <div className="flex items-center gap-2">
           <div className="flex-shrink-0">
-            <Image src="/piggy-bank.png" alt="Piggy bank character" width={80} height={80} />
+            <Image src="/images/mascot/pig.png" alt="Piggy bank character" width={80} height={80} />
           </div>
           <div className="relative flex-1">
             <div className="bg-white text-gray-800 p-4 rounded-xl shadow-sm">
@@ -462,7 +462,7 @@ export default function HomePage() {
                   }`}>
                     {message.type === 'bot' && (
                       <div className="flex-shrink-0 relative">
-                        <Image src="/piggy-bank.png" alt="TANABUTA" width={48} height={48} />
+                        <Image src="/images/mascot/pig.png" alt="TANABUTA" width={48} height={48} />
                         {/* Speaking indicator */}
                         {isSpeaking && index === messages.length - 1 && (
                           <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
@@ -520,7 +520,7 @@ export default function HomePage() {
                   className="mt-4 flex items-center gap-2"
                 >
                   <div className="flex-shrink-0">
-                    <Image src="/piggy-bank-walking.png" alt="TANABUTA thinking" width={48} height={48} className="animate-pulse" />
+                    <Image src="/images/mascot/piggy-bank-walking.png" alt="TANABUTA thinking" width={48} height={48} className="animate-pulse" />
                   </div>
                   <div className="relative flex-1">
                     <div className="bg-gray-100 text-gray-600 p-4 rounded-xl shadow-sm">
@@ -549,7 +549,7 @@ export default function HomePage() {
                   className="mt-4 flex items-center gap-2"
                 >
                   <div className="flex-shrink-0">
-                    <Image src="/piggy-bank-walking.png" alt="TANABUTA synthesizing speech" width={48} height={48} className="animate-pulse" />
+                    <Image src="/images/mascot/piggy-bank-walking.png" alt="TANABUTA synthesizing speech" width={48} height={48} className="animate-pulse" />
                   </div>
                   <div className="relative flex-1">
                     <div className="bg-blue-100 text-blue-600 p-4 rounded-xl shadow-sm">
@@ -584,7 +584,7 @@ export default function HomePage() {
               className="mt-4 flex items-center gap-2"
             >
               <div className="flex-shrink-0">
-                <Image src="/piggy-bank-walking.png" alt="TANABUTA listening" width={48} height={48} className="animate-pulse" />
+                <Image src="/images/mascot/piggy-bank-walking.png" alt="TANABUTA listening" width={48} height={48} className="animate-pulse" />
               </div>
               <div className="relative flex-1">
                 <div className="bg-blue-100 text-blue-800 p-4 rounded-xl shadow-sm">

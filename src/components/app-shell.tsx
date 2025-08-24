@@ -17,7 +17,7 @@ export default function AppShell({ children }: PropsWithChildren) {
       {/* auth配下のみ、グラデーションの上に重なる画面部分の背景画像 */}
       {isAuth && (
         <div
-          className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 h-svh w-full max-w-md z-0"
+          className="pointer-events-none fixed inset-0 z-0"
           aria-hidden="true"
         >
           <Image
@@ -25,7 +25,7 @@ export default function AppShell({ children }: PropsWithChildren) {
             alt=""
             fill
             priority
-            sizes="(max-width: 480px) 100vw, 480px"
+            sizes="100vw"
             style={{ objectFit: "cover", objectPosition: "top center" }}
           />
         </div>
