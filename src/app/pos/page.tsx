@@ -5,16 +5,7 @@ import dynamic from "next/dynamic"
 import { Camera, X, Check } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-// QrScanner を default / named どちらでも読み込む（SSR無効）
-const QrScanner = dynamic(async () => {
-  const m = await import("@/components/qr-scanner")
-  return (m as any).default ?? (m as any).QrScanner
-}, {
-  ssr: false,
-  loading: () => (
-    <div className="text-center text-sm text-gray-500 py-8">カメラを準備中...</div>
-  ),
-})
+import QrScanner from "@/components/qr-scanner" 
 
 // ▼ これをpage.tsx内の上のほうに追加（コンポーネントの外でも中でもOK）
 function HideGlobalFooter() {

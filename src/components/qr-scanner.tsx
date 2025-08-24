@@ -4,9 +4,7 @@ import { useEffect, useRef, useState } from "react"
 import { Camera, AlertCircle, Image as ImageIcon, Upload } from "lucide-react"
 import jsQR from "jsqr"
 
-interface QrScannerProps {
-  onScan: (result: string) => void
-}
+export type QrScannerProps = { onScan: (result: string) => void }
 
 export default function QrScanner({ onScan }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
