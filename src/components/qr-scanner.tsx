@@ -6,7 +6,7 @@ import jsQR from "jsqr"
 
 export type QrScannerProps = { onScan: (result: string) => void }
 
-// 簡易型（ブラウザ内蔵の BarcodeDetector があれば使う）
+// （任意）ブラウザ内蔵 BarcodeDetector を使える場合は先に試す
 type BarcodeDetectorLike = {
   detect: (source: CanvasImageSource) => Promise<Array<{ rawValue: string; format?: string }>>
 }
@@ -48,7 +48,6 @@ export default function QrScanner({ onScan }: QrScannerProps) {
       setError("")
 
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        // 高解像度のほうがデコード成功率が上がる
         video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
         audio: false,
       })
@@ -63,7 +62,6 @@ export default function QrScanner({ onScan }: QrScannerProps) {
         await video.play()
       }
 
-      // BarcodeDetector があれば先に試す（高速）
       if ("BarcodeDetector" in window) {
         try {
           const Fmts = (window as any).BarcodeDetector.getSupportedFormats
@@ -72,7 +70,7 @@ export default function QrScanner({ onScan }: QrScannerProps) {
           if (!Fmts || Fmts.includes("qr_code")) {
             barcodeRef.current = new (window as any).BarcodeDetector({ formats: ["qr_code"] })
           }
-        } catch { /* Safari等の例外は無視 */ }
+        } catch { /* ignore */ }
       }
 
       setIsLoading(false)
@@ -106,17 +104,14 @@ export default function QrScanner({ onScan }: QrScannerProps) {
     stopLoop()
     if (failTimeoutRef.current) { clearTimeout(failTimeoutRef.current); failTimeoutRef.current = null }
 
-    const scanIntervalMs = 140 // スロットル（速すぎると重い）
+    const scanIntervalMs = 140
     const tick = async (now: number) => {
       rafIdRef.current = requestAnimationFrame(tick)
 
       if (!videoRef.current || !canvasRef.current) return
       const video = videoRef.current
 
-      // メタデータ未取得やフレーム未準備なら待つ
       if (video.readyState < video.HAVE_ENOUGH_DATA || !video.videoWidth || !video.videoHeight) return
-
-      // スロットル
       if (now - lastScanTsRef.current < scanIntervalMs) return
       lastScanTsRef.current = now
 
@@ -129,18 +124,15 @@ export default function QrScanner({ onScan }: QrScannerProps) {
             onDetect(hit.rawValue)
             return
           }
-        } catch {
-          // 失敗したら jsQR にフォールバック
-        }
+        } catch { /* fallback to jsQR */ }
       }
 
       // 2) jsQR（確実）
       const canvas = canvasRef.current
-      const ctx = canvas.getContext("2d", { willReadFrequently: true } as any)
+      const ctx = canvas.getContext("2d", { willReadFrequently: true } as any) as CanvasRenderingContext2D | null
       if (!ctx) return
 
-      // Downscale: 精度と速度のバランスを取る
-      const targetW = Math.min(800, video.videoWidth) // 800pxまでに縮小
+      const targetW = Math.min(800, video.videoWidth)
       const scale = targetW / video.videoWidth
       const targetH = Math.floor(video.videoHeight * scale)
 
@@ -190,7 +182,7 @@ export default function QrScanner({ onScan }: QrScannerProps) {
       try {
         const canvas = document.createElement("canvas")
         canvas.width = img.width; canvas.height = img.height
-        const ctx = canvas.getContext("2d", { willReadFrequently: true } as any)
+        const ctx = canvas.getContext("2d", { willReadFrequently: true } as any) as CanvasRenderingContext2D | null
         if (!ctx) { setError("画像の読み込みに失敗しました。別の画像でお試しください。"); return }
         ctx.drawImage(img, 0, 0)
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
