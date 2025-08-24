@@ -207,7 +207,7 @@ export default function QrScanner({ onScan }: QrScannerProps) {
       <div className="relative bg-black rounded-xl overflow-hidden">
         <video ref={videoRef} className="w-full h-64 object-cover" playsInline muted />
 
-        {/* QRガイド枠 */}
+        {/* ガイド枠 */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-48 h-48 border-2 border-white rounded-lg relative">
             <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-purple-500 rounded-tl-lg"></div>
@@ -219,7 +219,7 @@ export default function QrScanner({ onScan }: QrScannerProps) {
 
         {/* スキャンライン */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-48 h-1 bg-purple-500 opacity-75 animate-pulse"></div>
+          <div className="w-48 h-1 opacity-75 animate-pulse bg-purple-500"></div>
         </div>
       </div>
 
