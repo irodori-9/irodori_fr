@@ -53,6 +53,10 @@ const joinUrl = (base: string, path: string) => {
   return `${b}/${p}`
 }
 
+const scanSupported: boolean =
+  typeof navigator !== "undefined" &&
+  !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
+
 export default function POSApp() {
   // ---- すべて初期化状態で開始（退避なし）----
   const [isScanning, setIsScanning] = useState(false)
