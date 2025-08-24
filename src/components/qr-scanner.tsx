@@ -6,10 +6,9 @@ import jsQR from "jsqr"
 
 export type QrScannerProps = { onScan: (result: string) => void }
 
-// （任意）ブラウザ内蔵 BarcodeDetector を使える場合は先に試す
-type BarcodeDetectorLike = {
-  detect: (source: CanvasImageSource) => Promise<Array<{ rawValue: string; format?: string }>>
-}
+const SCAN_INTERVAL_MS = 180
+const TIMEOUT_MS = 12_000
+const MAX_SAMPLE_W = 900 // 近距離で画素が太り過ぎるのを防ぐために縮小
 
 export default function QrScanner({ onScan }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null)
@@ -20,61 +19,40 @@ export default function QrScanner({ onScan }: QrScannerProps) {
   const [error, setError] = useState<string>("")
   const [stream, setStream] = useState<MediaStream | null>(null)
 
-  const rafIdRef = useRef<number | null>(null)
-  const lastScanTsRef = useRef<number>(0)
-  const barcodeRef = useRef<BarcodeDetectorLike | null>(null)
+  const scanTimerRef = useRef<number | null>(null)
   const failTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     startCamera()
+    const onVis = () => { document.hidden ? stopScanning() : (error ? null : startScanning()) }
+    document.addEventListener("visibilitychange", onVis)
     return () => {
-      stopLoop()
+      document.removeEventListener("visibilitychange", onVis)
+      stopScanning()
       stopCamera()
       if (failTimeoutRef.current) { clearTimeout(failTimeoutRef.current); failTimeoutRef.current = null }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const waitLoadedMetadata = async (video: HTMLVideoElement) =>
-    await new Promise<void>((resolve) => {
-      const done = () => { video.removeEventListener("loadedmetadata", done); resolve() }
-      if (video.readyState >= video.HAVE_METADATA) resolve()
-      else video.addEventListener("loadedmetadata", done)
-    })
 
   const startCamera = async () => {
     try {
-      setIsLoading(true)
-      setError("")
-
+      setIsLoading(true); setError("")
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+        video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } },
         audio: false,
       })
       setStream(mediaStream)
 
-      const video = videoRef.current
-      if (video) {
-        video.setAttribute("playsinline", "true")
-        video.muted = true
-        ;(video as any).srcObject = mediaStream
-        await waitLoadedMetadata(video)
-        await video.play()
-      }
-
-      if ("BarcodeDetector" in window) {
-        try {
-          const Fmts = (window as any).BarcodeDetector.getSupportedFormats
-            ? await (window as any).BarcodeDetector.getSupportedFormats()
-            : ["qr_code"]
-          if (!Fmts || Fmts.includes("qr_code")) {
-            barcodeRef.current = new (window as any).BarcodeDetector({ formats: ["qr_code"] })
-          }
-        } catch { /* ignore */ }
+      const v = videoRef.current
+      if (v) {
+        v.setAttribute("playsinline", "true") // iOS対策
+        v.muted = true
+        ;(v as any).srcObject = mediaStream
+        await v.play()
       }
 
       setIsLoading(false)
-      startLoop()
+      startScanning()
     } catch (err) {
       console.error("Camera access error:", err)
       setError("カメラにアクセスできません。許可設定を確認するか、画像から読み取ってください。")
@@ -84,98 +62,73 @@ export default function QrScanner({ onScan }: QrScannerProps) {
 
   const stopCamera = () => {
     if (stream) {
-      try { stream.getTracks().forEach((t) => t.stop()) } catch {}
+      try { stream.getTracks().forEach(t => t.stop()) } catch {}
       setStream(null)
     }
-    const video = videoRef.current
-    if (video) {
-      try { video.pause() } catch {}
-      try { (video as any).srcObject = null } catch {}
-      video.removeAttribute("src")
-      video.load()
-    }
   }
 
-  const stopLoop = () => {
-    if (rafIdRef.current) { cancelAnimationFrame(rafIdRef.current); rafIdRef.current = null }
-  }
-
-  const startLoop = () => {
-    stopLoop()
-    if (failTimeoutRef.current) { clearTimeout(failTimeoutRef.current); failTimeoutRef.current = null }
-
-    const scanIntervalMs = 140
-    const tick = async (now: number) => {
-      rafIdRef.current = requestAnimationFrame(tick)
-
+  const startScanning = () => {
+    stopScanning()
+    const tick = () => {
       if (!videoRef.current || !canvasRef.current) return
       const video = videoRef.current
-
-      if (video.readyState < video.HAVE_ENOUGH_DATA || !video.videoWidth || !video.videoHeight) return
-      if (now - lastScanTsRef.current < scanIntervalMs) return
-      lastScanTsRef.current = now
-
-      // 1) BarcodeDetector（速い）
-      if (barcodeRef.current) {
-        try {
-          const results = await barcodeRef.current.detect(video)
-          const hit = results?.find(r => !!r.rawValue)
-          if (hit?.rawValue) {
-            onDetect(hit.rawValue)
-            return
-          }
-        } catch { /* fallback to jsQR */ }
-      }
-
-      // 2) jsQR（確実）
       const canvas = canvasRef.current
       const ctx = canvas.getContext("2d", { willReadFrequently: true } as any) as CanvasRenderingContext2D | null
       if (!ctx) return
 
-      const targetW = Math.min(800, video.videoWidth)
-      const scale = targetW / video.videoWidth
-      const targetH = Math.floor(video.videoHeight * scale)
+      if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth && video.videoHeight) {
+        const vw = video.videoWidth
+        const vh = video.videoHeight
 
-      canvas.width = targetW
-      canvas.height = targetH
-      ctx.drawImage(video, 0, 0, targetW, targetH)
+        // 近距離でQRが太りすぎた場合のエイリアス抑制：縮小して解析
+        const targetW = Math.min(MAX_SAMPLE_W, vw)
+        const scale = targetW / vw
+        const targetH = Math.floor(vh * scale)
 
-      const imageData = ctx.getImageData(0, 0, targetW, targetH)
-      const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" })
-      if (code?.data) {
-        onDetect(code.data)
-        return
+        canvas.width = targetW
+        canvas.height = targetH
+
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(video, 0, 0, targetW, targetH)
+
+        const imageData = ctx.getImageData(0, 0, targetW, targetH)
+        // 黒地/白地どちらも試す（環境依存で白黒反転があり得る）
+        const codeA = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" })
+        const code = codeA // （不要に複雑化しない）
+
+        if (code?.data) {
+          onScan(code.data)
+          stopScanning()
+          stopCamera()
+          if (failTimeoutRef.current) { clearTimeout(failTimeoutRef.current); failTimeoutRef.current = null }
+          return
+        }
       }
+      scanTimerRef.current = window.setTimeout(tick, SCAN_INTERVAL_MS)
     }
+    tick()
 
-    rafIdRef.current = requestAnimationFrame(tick)
-
-    // 12秒でタイムアウト → 画像読み取り案内
+    // 12秒で一旦案内
     failTimeoutRef.current = window.setTimeout(() => {
-      stopLoop()
-      setError("QRコードを検出できませんでした。明るさやピントを調整するか、画像から読み取ってください。")
-    }, 12000)
+      if (scanTimerRef.current) {
+        stopScanning()
+        setError("QRコードを検出できませんでした。明るさやピントを調整するか、画像から読み取ってください。")
+      }
+    }, TIMEOUT_MS)
   }
 
-  const onDetect = (value: string) => {
-    onScan(value)
-    stopLoop()
-    stopCamera()
-    if (failTimeoutRef.current) { clearTimeout(failTimeoutRef.current); failTimeoutRef.current = null }
+  const stopScanning = () => {
+    if (scanTimerRef.current) { clearTimeout(scanTimerRef.current); scanTimerRef.current = null }
   }
 
-  // 画像ファイル fallback
+  // 画像ファイル Fallback
   const triggerFileSelect = () => fileInputRef.current?.click()
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; if (!file) return
     decodeFromFile(file); e.currentTarget.value = ""
   }
-
   const decodeFromFile = (file: File) => {
-    setError("")
-    stopLoop()
-    stopCamera()
-
+    setError(""); stopScanning(); stopCamera()
     const img = new Image()
     const objectUrl = URL.createObjectURL(file)
     img.onload = () => {
@@ -184,14 +137,13 @@ export default function QrScanner({ onScan }: QrScannerProps) {
         canvas.width = img.width; canvas.height = img.height
         const ctx = canvas.getContext("2d", { willReadFrequently: true } as any) as CanvasRenderingContext2D | null
         if (!ctx) { setError("画像の読み込みに失敗しました。別の画像でお試しください。"); return }
+        ctx.imageSmoothingEnabled = false
         ctx.drawImage(img, 0, 0)
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
         const code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "attemptBoth" })
         if (code?.data) onScan(code.data)
         else setError("画像からQRを検出できませんでした。別の角度・解像度でお試しください。")
-      } finally {
-        URL.revokeObjectURL(objectUrl)
-      }
+      } finally { URL.revokeObjectURL(objectUrl) }
     }
     img.onerror = () => { URL.revokeObjectURL(objectUrl); setError("画像の読み込みに失敗しました。") }
     img.src = objectUrl
@@ -206,8 +158,7 @@ export default function QrScanner({ onScan }: QrScannerProps) {
           <button onClick={startCamera} className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors">
             再試行（カメラ）
           </button>
-          <button onClick={triggerFileSelect}
-            className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
+          <button onClick={triggerFileSelect} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2">
             <Upload size={18} />
             画像から読み取る
           </button>
@@ -231,7 +182,7 @@ export default function QrScanner({ onScan }: QrScannerProps) {
       <div className="relative bg-black rounded-xl overflow-hidden">
         <video ref={videoRef} className="w-full h-64 object-cover" playsInline muted />
         {/* ガイド枠 */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-48 h-48 border-2 border-white rounded-lg relative">
             <div className="absolute top-0 left-0 w-6 h-6 border-t-4 border-l-4 border-purple-500 rounded-tl-lg" />
             <div className="absolute top-0 right-0 w-6 h-6 border-t-4 border-r-4 border-purple-500 rounded-tr-lg" />
@@ -240,17 +191,17 @@ export default function QrScanner({ onScan }: QrScannerProps) {
           </div>
         </div>
         {/* スキャンライン */}
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-48 h-1 opacity-75 animate-pulse bg-purple-500"></div>
         </div>
       </div>
 
+      {/* デコード用 Canvas（非表示） */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* 画像から読み取り（常時） */}
       <div className="mt-4 flex flex-col items-center">
-        <button onClick={triggerFileSelect}
-          className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2 text-sm">
+        <button onClick={triggerFileSelect} className="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors flex items-center gap-2 text-sm">
           <ImageIcon size={16} />
           画像から読み取る
         </button>
