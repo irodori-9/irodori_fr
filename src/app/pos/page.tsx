@@ -1,39 +1,35 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import dynamic from "next/dynamic"
 import { Camera, X, Check } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import QrScanner from "@/components/qr-scanner"
 
-import QrScanner from "@/components/qr-scanner" 
-
-// ▼ これをpage.tsx内の上のほうに追加（コンポーネントの外でも中でもOK）
+// ▼ このページ表示中だけフッター（下部ツールバー）を非表示
 function HideGlobalFooter() {
   useEffect(() => {
-    // ありそうなセレクタを複数カバー（お使いの実装に合わせて適宜追加OK）
     const selectors = [
-      '#app-footer',            // 推奨: フッターにidがある場合
-      '[data-bottom-nav]',      // data属性版
-      '[data-role="bottom-nav"]',
-      '.bottom-nav',            // クラス名が bottom-nav の場合
-      '.mobile-tabbar',         // タブバー系
-      'footer',                 // <footer> タグ（他のfooterがなければこれでOK）
+      "#app-footer",
+      "[data-bottom-nav]",
+      "[data-role='bottom-nav']",
+      ".bottom-nav",
+      ".mobile-tabbar",
+      "footer",
     ]
     const els: HTMLElement[] = []
-    selectors.forEach(sel =>
-      els.push(...Array.from(document.querySelectorAll<HTMLElement>(sel)))
-    )
+    selectors.forEach((sel) => els.push(...Array.from(document.querySelectorAll<HTMLElement>(sel))))
 
-    // 退避 & 非表示
     const prev = new Map<HTMLElement, string>()
-    els.forEach(el => { prev.set(el, el.style.display); el.style.display = 'none' })
+    els.forEach((el) => {
+      prev.set(el, el.style.display)
+      el.style.display = "none"
+    })
 
-    // ページ遷移で戻す
-    return () => els.forEach(el => { el.style.display = prev.get(el) ?? '' })
+    return () => els.forEach((el) => (el.style.display = prev.get(el) ?? ""))
   }, [])
   return null
 }
-// ▲ これをpage.tsx内の上のほうに追加（コンポーネントの外でも中でもOK）
+// ▲ フッター非表示
 
 type ExecuteResponse = {
   transaction_id: number
@@ -53,10 +49,6 @@ const joinUrl = (base: string, path: string) => {
   return `${b}/${p}`
 }
 
-const scanSupported: boolean =
-  typeof navigator !== "undefined" &&
-  !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia)
-
 export default function POSApp() {
   // ---- すべて初期化状態で開始（退避なし）----
   const [isScanning, setIsScanning] = useState(false)
@@ -65,20 +57,20 @@ export default function POSApp() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [paymentComplete, setPaymentComplete] = useState(false)
 
-  // 画面には出さないデバッグ用
+  // 画面には出さないデバッグ用（console出力のみ）
   const [lastTriedUrl, setLastTriedUrl] = useState<string>("")
   const [error, setError] = useState<string>("")
 
   const baseUrl = useMemo(() => process.env.NEXT_PUBLIC_API_BASE_URL || "", [])
 
-  // QR読み取り結果を受け取り（退避しない）
+  // QR読み取り結果（退避しない）
   const handleQRScan = (result: string) => {
     setScannedUserId(result)
     setIsScanning(false)
     setError("")
   }
 
-  // 支払い完了後に完全初期化（退避なしなので state のみ）
+  // 支払い完了後に完全初期化（次のQRに備える）
   const resetAfterPayment = (autoRescan = false) => {
     setPaymentComplete(false)
     setError("")
@@ -87,7 +79,6 @@ export default function POSApp() {
     if (autoRescan) setIsScanning(true)
   }
 
-  
   const handlePayment = async () => {
     if (!scannedUserId || !amount) {
       setError("ユーザーIDと金額を入力してください")
@@ -131,18 +122,18 @@ export default function POSApp() {
 
       // 完了アニメ表示後に初期化（次のQR読み取りに備える）
       setTimeout(() => {
-        resetAfterPayment(/* autoRescan */ false) // trueにすると完了後に自動でスキャン開始
+        resetAfterPayment(/* autoRescan */ false) // true にすると完了後に自動でスキャン開始
       }, 3000)
     } catch (err: any) {
       console.error("POS payment failed:", err?.message || err, "tried:", lastTriedUrl)
-      // 画面には詳しい赤枠は出さないポリシー
+      // 画面には赤枠などを出さない方針：保持のみ
       setError("支払い処理に失敗しました")
     } finally {
       setIsProcessing(false)
     }
   }
 
-  // 手動リセット（退避がないので state を空に戻すだけ）
+  // 手動リセット
   const resetForm = () => {
     setScannedUserId("")
     setAmount("")
@@ -152,7 +143,7 @@ export default function POSApp() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-300 via-pink-200 to-blue-200 px-4 py-6">
-      <HideGlobalFooter /> {/* ← この1行を追加：このページ表示中だけフッター非表示 */}
+      <HideGlobalFooter />
       <div className="max-w-sm mx-auto">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800 mb-1">たなぼた!</h1>
@@ -197,7 +188,7 @@ export default function POSApp() {
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+                className="fixed inset-0 bg-black/80 z-50 flex items-center justify中心 p-4"
               >
                 <motion.div
                   initial={{ y: 50 }}
@@ -220,8 +211,7 @@ export default function POSApp() {
             )}
           </AnimatePresence>
 
-          {/* エラーパネルは出さない（必要ならトースト等へ差し替え可） */}
-
+          {/* 実行UI */}
           <button
             onClick={() => setIsScanning(true)}
             disabled={isProcessing}
@@ -301,39 +291,3 @@ export default function POSApp() {
     </div>
   )
 }
-// ...existing code...
-  async function startScan(): Promise<void> {
-    if (!scanSupported) {
-      setError(
-        "このブラウザは QR デコードに未対応です（手入力か画像読み取りをご利用ください）"
-      );
-      return;
-    }
-    setError("");
-    setIsLoading(true);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-        audio: false,
-      });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        await videoRef.current.play();
-      }
-      // BarcodeDetector APIの初期化
-      if ("BarcodeDetector" in window) {
-        const supportedFormats = await (window as any).BarcodeDetector.getSupportedFormats();
-        barcodeDetectorRef.current = new (window as any).BarcodeDetector({
-          formats: supportedFormats,
-        }) as BarcodeDetectorLike;
-      } else {
-        setError("このブラウザは BarcodeDetector API に未対応です");
-      }
-      setIsLoading(false);
-      scanLoop();
-    } catch (err) {
-      console.error("カメラの起動に失敗:", err);
-      setError("カメラの起動に失敗しました。設定を確認してください。");
-      setIsLoading(false);
-    }
-  }
