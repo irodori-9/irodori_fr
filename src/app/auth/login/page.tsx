@@ -56,18 +56,18 @@ export default function LoginPage() {
       // ログイン成功時の応答を確認
       const loginResponse = await res.json()
       console.log('🔍 Login - Login response:', loginResponse)
-      
-      // ログイン成功後、メールアドレスからユーザーIDを取得（仮の実装）
-      // または認証状態を一時的に設定
-      console.log('🔍 Login - Setting temporary auth state with email:', email)
-      const tempUserObj = {
-        id: 1, // 仮のID - 実際のアプリケーションでは適切なユーザーIDを取得
-        nickname: undefined,
+
+      // バックエンドが返した正しいユーザーIDを保存
+      const userId = loginResponse?.id
+      const nickname = loginResponse?.nickname
+      const userObj = {
+        id: userId,
+        nickname,
         email: email,
         isAuthenticated: true
       }
-      console.log('🔍 Login - Calling login() with:', tempUserObj)
-      login(tempUserObj)
+      console.log('🔍 Login - Calling login() with:', userObj)
+      login(userObj)
       
       console.log('🔍 Login - Redirecting to /home')
       router.push("/home")
