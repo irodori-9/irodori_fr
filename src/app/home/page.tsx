@@ -375,8 +375,8 @@ export default function HomePage() {
           </div>
           <div className="relative flex-1">
             <div className="bg-white text-gray-800 p-4 rounded-xl shadow-sm">
-              <p className="font-bold text-sm leading-relaxed">今日もお仕事お疲れ様プイ！</p>
-              <p className="text-sm leading-relaxed">お金のことで困ったことがあれば聞かせてほしいプイ！</p>
+              <p className="font-bold text-sm leading-relaxed">今日もお仕事お疲れ様ブヒ！</p>
+              <p className="text-sm leading-relaxed">お金のことで困ったことがあれば聞かせてほしいブヒ！</p>
             </div>
             {/* Speech bubble tail */}
             <div className="absolute top-1/2 -left-2 -translate-y-1/2 w-0 h-0 border-t-8 border-t-transparent border-r-8 border-r-white border-b-8 border-b-transparent" />

@@ -34,15 +34,15 @@ export default function ConsentPage() {
             <dl className="space-y-4 text-sm text-gray-700">
               <div>
                 <dt className="font-semibold">利用規約について</dt>
-                <dd className="text-gray-600">〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇</dd>
+                <dd className="text-gray-600">本アプリの機能をご利用いただくには、利用規約への同意が必要です。</dd>
               </div>
               <div>
                 <dt className="font-semibold">プライバシーポリシーについて</dt>
-                <dd className="text-gray-600">〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇</dd>
+                <dd className="text-gray-600">個人情報の取り扱いはプライバシーポリシーに基づいて行います。</dd>
               </div>
               <div>
                 <dt className="font-semibold">データ収集と利用について</dt>
-                <dd className="text-gray-600">〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇〇</dd>
+                <dd className="text-gray-600">本アプリは、体験向上のために一部の利用データを収集・活用します。</dd>
               </div>
             </dl>
           </div>
