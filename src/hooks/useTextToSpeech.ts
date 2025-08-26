@@ -15,7 +15,10 @@ interface UseTextToSpeechReturn {
   isLoading: boolean
   isPlaying: boolean
   error: string | null
+  requiresManualPlay: boolean
+  audioReady: boolean
   speak: (text: string, options?: SpeechOptions) => Promise<void>
+  playManually: () => void
   stop: () => void
   clearError: () => void
 }
@@ -24,13 +27,34 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
   const [isLoading, setIsLoading] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [audioReady, setAudioReady] = useState(false)
   
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const audioUrlRef = useRef<string | null>(null)
 
+  // ブラウザ判定
+  const isIOSSafari = /iPad|iPhone|iPod/.test(navigator.userAgent) && 
+                      /Safari/.test(navigator.userAgent) && 
+                      !/Chrome/.test(navigator.userAgent)
+  const isAndroidChrome = /Android/.test(navigator.userAgent) && 
+                          /Chrome/.test(navigator.userAgent)
+  
+  // iOS Safariの場合は常に手動再生が必要
+  const requiresManualPlay = isIOSSafari
+
   const clearError = useCallback(() => {
     setError(null)
   }, [])
+
+  const playManually = useCallback(() => {
+    if (audioRef.current && audioReady) {
+      console.log('🔴 手動音声再生開始')
+      audioRef.current.play().catch((error: any) => {
+        console.error('❌ 手動音声再生失敗:', error)
+        setError('音声の再生に失敗しました')
+      })
+    }
+  }, [audioReady])
 
   const stop = useCallback(() => {
     if (audioRef.current) {
@@ -44,6 +68,8 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
       URL.revokeObjectURL(audioUrlRef.current)
       audioUrlRef.current = null
     }
+    
+    setAudioReady(false)
   }, [])
 
   const speak = useCallback(async (text: string, options: SpeechOptions = {}) => {
@@ -51,6 +77,9 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
       setError('読み上げるテキストが空です')
       return
     }
+
+    // 新しい音声合成開始時はaudioReadyをリセット
+    setAudioReady(false)
 
     // 長すぎるテキストの場合は警告を表示して音声合成をスキップ
     const MAX_TEXT_LENGTH = 1000 // 最大1000文字
@@ -150,8 +179,33 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
         setIsPlaying(false)
       }
 
-      // 音声を再生
-      await audio.play()
+      // ブラウザ別の音声再生処理
+      if (isIOSSafari) {
+        // iOS Safariでは音声準備のみ行い、実際の再生はユーザーアクション待ち
+        console.log('🍎 iOS Safari: 音声準備完了、手動再生待ち')
+        setAudioReady(true)
+        setIsLoading(false)
+      } else if (isAndroidChrome) {
+        // Android Chromeでは従来通り自動再生
+        console.log('🤖 Android Chrome: 自動音声再生実行')
+        setAudioReady(true)
+        await audio.play()
+      } else {
+        // その他ブラウザでは自動再生を試行
+        console.log('🖥️ Other browser: 自動再生を試行')
+        setAudioReady(true)
+        try {
+          await audio.play()
+        } catch (playError: any) {
+          console.warn('⚠️ 自動再生失敗、手動再生モードに切り替え:', playError)
+          setIsLoading(false)
+          if (playError.name === 'NotAllowedError') {
+            setError('音声を再生するには再生ボタンをクリックしてください')
+          } else {
+            throw playError
+          }
+        }
+      }
 
     } catch (error: any) {
       console.error('🚫 音声合成エラー:', error)
@@ -186,7 +240,10 @@ export const useTextToSpeech = (): UseTextToSpeechReturn => {
     isLoading,
     isPlaying,
     error,
+    requiresManualPlay,
+    audioReady,
     speak,
+    playManually,
     stop,
     clearError
   }
