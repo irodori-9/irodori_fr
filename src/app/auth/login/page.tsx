@@ -53,21 +53,33 @@ export default function LoginPage() {
         throw new Error(fallbackMsg)
       }
       
-      // ログイン成功時の応答を確認
+      // ログイン成功時の応答を確認（メッセージのみの可能性あり）
       const loginResponse = await res.json()
       console.log('🔍 Login - Login response:', loginResponse)
 
-      // バックエンドが返した正しいユーザーIDを保存
-      const userId = loginResponse?.id
-      const nickname = loginResponse?.nickname
+      // バックエンドの /me からユーザー情報を取得（優先）
+      let me: any | null = null
+      try {
+        const meRes = await fetch(`${base}/me`, { credentials: 'include' })
+        if (meRes.ok) {
+          me = await meRes.json()
+          console.log('🔍 Login - /me response:', me)
+        }
+      } catch {}
+
+      const userId = me?.user_id ?? loginResponse?.id
+      if (!userId) {
+        throw new Error('ユーザー情報の取得に失敗しました')
+      }
+
       const userObj = {
         id: userId,
-        nickname,
+        nickname: me?.nickname ?? loginResponse?.nickname,
         email: email,
         isAuthenticated: true
       }
-      console.log('🔍 Login - Calling login() with:', userObj)
       login(userObj)
+      try { localStorage.setItem('registered_user_id', String(userId)) } catch {}
       
       console.log('🔍 Login - Redirecting to /home')
       router.push("/home")

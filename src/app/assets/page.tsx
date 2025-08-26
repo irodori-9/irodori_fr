@@ -37,6 +37,20 @@ const getIcon = (icon: string) => {
   }
 }
 
+// 日付フォーマット
+const formatDate = (iso: string) => {
+  if (!iso) return ""
+  try {
+    const d = new Date(iso)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, "0")
+    const dd = String(d.getDate()).padStart(2, "0")
+    return `${yyyy}/${mm}/${dd}`
+  } catch {
+    return iso
+  }
+}
+
 // たなぼた履歴の型
 type TanabotaTx = {
   id: number
@@ -57,37 +71,21 @@ export default function AssetsPage() {
     return undefined
   }, [user])
 
-  const [tx, setTx] = useState<TanabotaTx | null>(null)
+  const [txList, setTxList] = useState<TanabotaTx[]>([])
 
   useEffect(() => {
     const fetchTx = async () => {
       try {
         const base = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000"
         if (!userId) return
-        const res = await fetch(`${base}/pos/transactions?user_id=${userId}&limit=1`)
+        const res = await fetch(`${base}/pos/transactions?user_id=${userId}&limit=200`)
         if (!res.ok) return
         const list: TanabotaTx[] = await res.json()
-        setTx(list?.[0] ?? null)
+        setTxList(Array.isArray(list) ? list : [])
       } catch {}
     }
     fetchTx()
   }, [userId])
-
-  // 表示用フォーマット
-  const dateLabel = useMemo(() => {
-    if (!tx?.created_at) return ""
-    try {
-      const d = new Date(tx.created_at)
-      const yyyy = d.getFullYear()
-      const mm = String(d.getMonth() + 1).padStart(2, "0")
-      const dd = String(d.getDate()).padStart(2, "0")
-      return `${yyyy}/${mm}/${dd}`
-    } catch {
-      return tx.created_at
-    }
-  }, [tx])
-
-  const historyAmount = tx ? `+ ¥${Number(tx.tanabota_total).toLocaleString()}` : "+ ¥0"
 
   return (
     <Dialog>
@@ -165,13 +163,17 @@ export default function AssetsPage() {
         <section>
           <h2 className="font-bold text-lg mb-2">たなぼた履歴</h2>
           <div className="p-4 bg-purple-100/80 rounded-2xl text-center">
-            {tx ? (
-              <>
-                <p className="text-xs text-gray-500">{dateLabel || ""}</p>
-                <p className="font-medium text-gray-700">TANABOTA機能体験</p>
-                <p className="text-3xl font-bold text-green-600 mt-1">{historyAmount}</p>
-                <p className="text-sm text-purple-700 font-semibold mt-1">貯金口座に追加</p>
-              </>
+            {txList.length > 0 ? (
+              <div className="space-y-3">
+                {txList.map((t, idx) => (
+                  <div key={t.id} className={idx !== 0 ? "pt-3 border-t border-purple-300/60" : ""}>
+                    <p className="text-xs text-gray-500">{formatDate(t.created_at)}</p>
+                    <p className="font-medium text-gray-700">TANABOTA機能体験</p>
+                    <p className="text-3xl font-bold text-green-600 mt-1">{`+ ¥${Number(t.tanabota_total).toLocaleString()}`}</p>
+                    <p className="text-sm text-purple-700 font-semibold mt-1">貯金口座に追加</p>
+                  </div>
+                ))}
+              </div>
             ) : (
               <p className="text-sm text-gray-600 py-2">取引履歴なし</p>
             )}
