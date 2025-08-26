@@ -10,9 +10,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { AuthGuard } from '@/components/AuthGuard'
 
 const summaryData = [
-  { label: "貯金した額", value: "¥500,000" },
-  { label: "投資した額", value: "¥1,000,000" },
-  { label: "節約した額", value: "¥500,000" },
+  { label: "貯金した額", value: "¥43,200" },
+  { label: "投資した額", value: "¥13,000" },
+  { label: "節約した額", value: "¥34,000" },
   { label: "いいね(今週)", value: "112", icon: Heart },
 ]
 
@@ -30,7 +30,17 @@ export default function HomePage() {
   
   
   // 音声合成フック
-  const { isLoading: isSynthesizing, isPlaying: isSpeaking, error: speechError, speak, stop: stopSpeech, clearError: clearSpeechError } = useTextToSpeech()
+  const { 
+    isLoading: isSynthesizing, 
+    isPlaying: isSpeaking, 
+    error: speechError, 
+    requiresManualPlay,
+    audioReady,
+    speak, 
+    playManually,
+    stop: stopSpeech, 
+    clearError: clearSpeechError 
+  } = useTextToSpeech()
   
   // 音声録音用の ref と state
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -477,18 +487,31 @@ export default function HomePage() {
                           ? 'bg-purple-500 text-white' 
                           : 'bg-white text-gray-800'
                       }`}>
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm leading-relaxed flex-1">{message.text}</p>
-                          {/* Audio indicator for bot messages */}
-                          {message.type === 'bot' && speechEnabled && (
-                            <div className="flex-shrink-0">
-                              {isSpeaking && index === messages.length - 1 ? (
+                        <div className="space-y-2">
+                          <p className="text-sm leading-relaxed">{message.text}</p>
+                          {/* Manual play button for bot messages */}
+                          {message.type === 'bot' && speechEnabled && index === messages.length - 1 && (
+                            <div className="flex items-center gap-2">
+                              {requiresManualPlay && audioReady ? (
+                                <button
+                                  onClick={playManually}
+                                  className="flex items-center gap-1 px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium hover:bg-blue-200 transition-colors"
+                                >
+                                  <Volume2 size={14} />
+                                  <span>音声を聞く</span>
+                                </button>
+                              ) : isSpeaking ? (
                                 <div className="flex items-center gap-1 text-green-600">
-                                  <Volume2 size={16} className="animate-pulse" />
+                                  <Volume2 size={14} className="animate-pulse" />
                                   <span className="text-xs">再生中</span>
                                 </div>
+                              ) : isSynthesizing ? (
+                                <div className="flex items-center gap-1 text-gray-500">
+                                  <Volume2 size={14} className="animate-pulse" />
+                                  <span className="text-xs">音声準備中...</span>
+                                </div>
                               ) : (
-                                <Volume2 size={16} className="text-gray-400" />
+                                <Volume2 size={14} className="text-gray-400" />
                               )}
                             </div>
                           )}
