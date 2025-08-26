@@ -56,18 +56,23 @@ export default function LoginPage() {
       // ログイン成功時の応答を確認
       const loginResponse = await res.json()
       console.log('🔍 Login - Login response:', loginResponse)
-      
-      // ログイン成功後、メールアドレスからユーザーIDを取得（仮の実装）
-      // または認証状態を一時的に設定
-      console.log('🔍 Login - Setting temporary auth state with email:', email)
-      const tempUserObj = {
-        id: 1, // 仮のID - 実際のアプリケーションでは適切なユーザーIDを取得
-        nickname: undefined,
+
+      // バックエンドの /me からユーザー情報を取得
+      const meRes = await fetch(`${base}/me`, { credentials: 'include' })
+      if (!meRes.ok) {
+        throw new Error('ユーザー情報の取得に失敗しました')
+      }
+      const me = await meRes.json()
+      console.log('🔍 Login - /me response:', me)
+
+      const userObj = {
+        id: me.user_id,
+        nickname: me.nickname,
         email: email,
         isAuthenticated: true
       }
-      console.log('🔍 Login - Calling login() with:', tempUserObj)
-      login(tempUserObj)
+      login(userObj)
+      try { localStorage.setItem('registered_user_id', String(me.user_id)) } catch {}
       
       console.log('🔍 Login - Redirecting to /home')
       router.push("/home")

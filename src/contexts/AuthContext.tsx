@@ -43,41 +43,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
         setIsLoading(false)
         return
       }
-
-      console.log('🔍 AuthContext - Calling /api/user/session with:', { user_id: parseInt(storedUserId) })
-      
-      // /api/user/session でユーザー情報を取得
-      const response = await fetch('/api/user/session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ user_id: parseInt(storedUserId) }),
+      const base = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000'
+      console.log('🔍 AuthContext - Calling backend /me')
+      const response = await fetch(`${base}/me`, {
+        method: 'GET',
+        credentials: 'include',
       })
 
-      console.log('🔍 AuthContext - Session response:', { 
-        ok: response.ok, 
+      console.log('🔍 AuthContext - /me response:', {
+        ok: response.ok,
         status: response.status,
-        statusText: response.statusText
+        statusText: response.statusText,
       })
 
       if (response.ok) {
         const userData = await response.json()
-        console.log('🔍 AuthContext - Session data received:', userData)
-        
+        console.log('🔍 AuthContext - /me data received:', userData)
         const userObj = {
-          id: userData.user_id,
+          id: userData.user_id ?? parseInt(storedUserId),
           nickname: userData.nickname,
           email: userData.email,
           isAuthenticated: true,
         }
-        
-        console.log('🔍 AuthContext - Setting user:', userObj)
+        console.log('🔍 AuthContext - Setting user from /me:', userObj)
         setUser(userObj)
       } else {
-        // セッション無効の場合はlocalStorageをクリア
-        console.log('🔍 AuthContext - Session invalid, clearing localStorage')
-        localStorage.removeItem('registered_user_id')
+        // セッション無効でも localStorage は保持（QR用途のID維持）
+        console.log('🔍 AuthContext - /me invalid; keeping localStorage, not setting user')
       }
     } catch (error) {
       console.error('🔍 AuthContext - ユーザーセッション確認エラー:', error)
