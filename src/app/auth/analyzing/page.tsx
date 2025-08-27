@@ -35,7 +35,7 @@ export default function AnalyzingPage() {
           alt="分析中のブタキャラクター"
           width={150}
           height={150}
-          className="shrink-0"
+          className="shrink-0 origin-bottom will-change-transform motion-safe:animate-bounce [animation-duration:1.1s]"
         />
         <p className={`${cherry.className} text-2xl text-gray-800 tracking-wider`}>Analyzing....</p>
       </div>
