@@ -35,7 +35,8 @@
       "Bash(npm run lint)",
       "Bash(npm start)",
       "Bash(PORT=3001 npm start)",
-      "Bash(PORT=3333 npm start)"
+      "Bash(PORT=3333 npm start)",
+      "WebFetch(domain:aps-irodori-01-service-habzggebhadug7fg.eastasia-01.azurewebsites.net)"
     ],
     "deny": []
   }
