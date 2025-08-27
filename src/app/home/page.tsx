@@ -543,7 +543,7 @@ export default function HomePage() {
                   className="mt-4 flex items-center gap-2"
                 >
                   <div className="flex-shrink-0">
-                    <Image src="/images/mascot/piggy-bank-walking.png" alt="TANABUTA thinking" width={48} height={48} className="animate-pulse" />
+                    <Image src="/images/mascot/pig-analyzing.png" alt="TANABUTA thinking" width={48} height={48} className="animate-pulse" />
                   </div>
                   <div className="relative flex-1">
                     <div className="bg-gray-100 text-gray-600 p-4 rounded-xl shadow-sm">
@@ -572,7 +572,7 @@ export default function HomePage() {
                   className="mt-4 flex items-center gap-2"
                 >
                   <div className="flex-shrink-0">
-                    <Image src="/images/mascot/piggy-bank-walking.png" alt="TANABUTA synthesizing speech" width={48} height={48} className="animate-pulse" />
+                    <Image src="/images/mascot/pig-analyzing.png" alt="TANABUTA synthesizing speech" width={48} height={48} className="animate-pulse" />
                   </div>
                   <div className="relative flex-1">
                     <div className="bg-blue-100 text-blue-600 p-4 rounded-xl shadow-sm">
@@ -607,7 +607,7 @@ export default function HomePage() {
               className="mt-4 flex items-center gap-2"
             >
               <div className="flex-shrink-0">
-                <Image src="/images/mascot/piggy-bank-walking.png" alt="TANABUTA listening" width={48} height={48} className="animate-pulse" />
+                <Image src="/images/mascot/pig-analyzing.png" alt="TANABUTA listening" width={48} height={48} className="animate-pulse" />
               </div>
               <div className="relative flex-1">
                 <div className="bg-blue-100 text-blue-800 p-4 rounded-xl shadow-sm">

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Cherry_Bomb_One } from "next/font/google"
 import { useEffect, useMemo, useState } from "react"
 import { useAuth } from "@/contexts/AuthContext"
-import PiggyBankWalking from "../../../public/images/mascot/piggy-bank-walking.png"
+import PigAnalyzing from "../../../public/images/mascot/pig-analyzing.png"
 
 const cherryBombOne = Cherry_Bomb_One({ subsets: ["latin"], weight: "400", display: "swap" })
 
@@ -184,7 +184,7 @@ export default function AssetsPage() {
       <DialogContent className="max-w-xs sm:max-w-sm rounded-3xl p-8 text-center">
         <div className="flex flex-col items-center gap-4">
           <h2 className="text-lg font-bold text-gray-800">たなぶた証券のサイトに遷移します</h2>
-          <Image src={PiggyBankWalking} alt="Walking piggy bank" width={150} height={150} className="my-4" />
+          <Image src={PigAnalyzing} alt="Analyzing piggy bank" width={150} height={150} className="my-4" />
           <Button className={`w-full bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white font-bold rounded-2xl py-6 text-lg shadow-lg hover:opacity-90 transition-opacity ${cherryBombOne.className}`}>
             つづける
           </Button>
