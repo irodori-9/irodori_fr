@@ -104,7 +104,7 @@ export default function BudgetPage() {
             disabled={!canNext}
             onClick={() => {
               savePref("月の推し活予算", [selected])
-              const to = nickname ? `/auth/family?name=${encodeURIComponent(nickname)}` : "/auth/family"
+              const to = nickname ? `/auth/preparation?name=${encodeURIComponent(nickname)}` : "/auth/preparation"
               router.push(to)
             }}
             className={`${btnBase} ${canNext ? btnEnabled : btnDisabled}`}

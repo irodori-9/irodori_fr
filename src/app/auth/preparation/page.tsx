@@ -118,7 +118,7 @@ export default function PreparationPage() {
             disabled={!canNext}
             onClick={() => {
               savePref("将来の備えレベル", [selected])
-              const to = nickname ? `/auth/goals?name=${encodeURIComponent(nickname)}` : "/auth/goals"
+              const to = nickname ? `/auth/connections?name=${encodeURIComponent(nickname)}` : "/auth/connections"
               router.push(to)
             }}
             className={`${btnBase} ${canNext ? btnEnabled : btnDisabled}`}
