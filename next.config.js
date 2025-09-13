@@ -6,6 +6,14 @@ const nextConfig = {
     unoptimized: true, // Azure App Service standalone モードでの画像表示対応
   },
 
+  // 静的ファイルの明示的なコピー設定
+  experimental: {
+    outputFileTracingRoot: process.cwd(),
+    outputFileTracingIncludes: {
+      '*': ['./public/**/*'],
+    },
+  },
+
   env: {
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
   },
