@@ -35,7 +35,7 @@ export default function TanabotaMissionSection() {
         setLoading(true)
         setError(null)
         
-        const response = await fetch('/api/missions')
+        const response = await fetch(`/api/missions?t=${Date.now()}`)
         if (!response.ok) {
           throw new Error(`Failed to fetch missions: ${response.status}`)
         }
