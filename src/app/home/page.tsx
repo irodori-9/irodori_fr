@@ -8,6 +8,10 @@ import axios from 'axios'
 import { useTextToSpeech } from '@/hooks/useTextToSpeech'
 import { useAuth } from '@/contexts/AuthContext'
 import { AuthGuard } from '@/components/AuthGuard'
+import TanabotaMissionSection from '@/components/TanabotaMissionSection'
+import { Cherry_Bomb_One } from "next/font/google"
+
+const cherry = Cherry_Bomb_One({ weight: "400", subsets: ["latin"], display: "swap" })
 
 const summaryData = [
   { label: "貯金した額", value: "¥43,200" },
@@ -372,7 +376,7 @@ export default function HomePage() {
 
   return (
     <AuthGuard>
-      <div className="space-y-6">
+      <div className="space-y-6 pb-24">
       {/* Chatbot Card */}
       <motion.div
         layout
@@ -665,7 +669,7 @@ export default function HomePage() {
 
       {/* Monthly Summary */}
       <div>
-        <h2 className="font-bold text-lg mb-3 text-center text-gray-700">マンスリーサマリー</h2>
+        <h2 className={`text-2xl mb-3 text-center text-gray-700 ${cherry.className}`}>マンスリーサマリー</h2>
         <div className="grid grid-cols-2 gap-4">
           {summaryData.map((item, index) => (
             <div key={index} className="p-4 bg-purple-100/70 rounded-2xl text-center shadow-sm">
@@ -677,7 +681,10 @@ export default function HomePage() {
             </div>
           ))}
         </div>
-        </div>
+      </div>
+        
+      {/* Tanabota Mission Section */}
+      <TanabotaMissionSection />
       </div>
     </AuthGuard>
   )
