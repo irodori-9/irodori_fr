@@ -35,7 +35,7 @@ export default function TanabotaMissionSection() {
         setLoading(true)
         setError(null)
         
-        const response = await fetch('/mission.csv')
+        const response = await fetch('/api/missions')
         if (!response.ok) {
           throw new Error(`Failed to fetch missions: ${response.status}`)
         }
