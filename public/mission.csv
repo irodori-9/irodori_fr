@@ -1,0 +1,7 @@
+id,title,subtitle,reward,button_text,image_path,status,category
+1,"INIカムバック「The Origin」の感想をストーリーに投稿しよう！","サンリオキャラクターズのことをインスタに写真を添えて投稿しよう！",300,"投稿する！","/images/missions/ini-origin.jpg","active","social"
+2,"aespaの広告を見に行こう","新宿駅にあるaespaの広告を見に行こう！",300,"見た！","/images/missions/aespa-ad.webp","active","location"ßß
+3,"TWICEのコンサートチケットをゲットしよう！","TWICEの最新コンサート情報をチェックしてチケットを申し込もう！",500,"申し込む！","/images/missions/twice-concert.webp","active","event"
+4,"BLACKPINKのMVを視聴してレビューを書こう","BLACKPINKの新MVをYouTubeで視聴し、感想を投稿しよう！",200,"書く！","/images/missions/blackpink-mv.jpg","active","social"
+5,"名探偵コナンの謎解きチャレンジに参加しよう","コナンの謎を解いてストーリーを投稿しよう！",300,"解く！","/images/missions/conan-mystery.jpg","active","social"
+6,"攻殻機動隊のポップアップイベントに行こう","渋谷の攻殻機動隊イベントを訪れて写真を撮ろう！",500,"行った！","/images/missions/ghostintheshell-event.jpg","active","location"
